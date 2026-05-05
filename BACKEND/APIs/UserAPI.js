@@ -87,21 +87,45 @@ userApp.get('/users/logout',async(req,res)=>{
     })
     res.status(200).json({message:"Logout Success."})
 })
+
 //reading all the posts
-userApp.get('/posts',async(req,res)=>{
+userApp.get('/posts/fyp',async(req,res)=>{
     //read posts
     const allPosts = await PostModel.find({isPostActive:"true"})
     //send res
     res.status(200).json({message:"Posts: ",payload:allPosts})
 })
 
-//Page refresh
-userApp.get("/check-auth",verifyToken,(req,res)=>{
+//reading following posts
+userApp.get('/posts/following', verifyToken,async (req, res) => {
+  try {
+    // read userId from token/middleware
+    const userId = req.user?._id;
+    const user = await UserModel.findById({ _id: userId });
+    if (!user) {
+      return res.status(404).json({ message: "No user found" });
+    }
+    const followingUsers = user.following
+console.log(followingUsers)
+    const allPosts = await PostModel.find({
+      author: { $in: followingUsers }
+    });
+
+    // send response
     res.status(200).json({
-        message:"authenticated",
-        payload:req.user
-    })
-})
+      message: "Posts fetched successfully",
+      payload: allPosts
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Error fetching posts",
+      error: err.message
+    });
+  }
+});
+
+//follow-system
 userApp.put("/users/following",verifyToken,async (req,res)=>{
 const {email}=req.body
 const bodyy=req.user?._id
@@ -117,4 +141,12 @@ if(searchUser&&searchUser._id==bodyy){
     {$addToSet:{followers:bodyy}})
     res.status(200).json({ message: "Following..." });
 
+})
+
+//Page refresh
+userApp.get("/check-auth",verifyToken,(req,res)=>{
+    res.status(200).json({
+        message:"authenticated",
+        payload:req.user
+    })
 })
