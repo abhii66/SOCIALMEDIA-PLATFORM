@@ -1,0 +1,20 @@
+###new post
+POST http://localhost:2167/post-api/posts
+Content-Type: application/json
+
+{
+    "author":"69f8a526edb8f75bef0fd9c1",
+    "content":"What A Wonderful Day!"
+}
+
+###read
+GET http://localhost:2167/post-api/posts
+
+###Post update
+PUT http://localhost:2167/post-api/posts
+Content-Type: application/json
+
+{
+    "postId":"69f8baf7dd2eb74896af5f99",
+    "content":"What A Beautiful Night!"
+}
