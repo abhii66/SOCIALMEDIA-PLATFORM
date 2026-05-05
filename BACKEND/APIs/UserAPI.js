@@ -87,6 +87,7 @@ userApp.get('/users/logout',async(req,res)=>{
     })
     res.status(200).json({message:"Logout Success."})
 })
+
 //reading all the posts
 userApp.get('/posts',async(req,res)=>{
     //read posts
@@ -102,10 +103,11 @@ userApp.get("/check-auth",verifyToken,(req,res)=>{
         payload:req.user
     })
 })
+
+//following-system
 userApp.put("/users/following",verifyToken,async (req,res)=>{
 const {email}=req.body
 const bodyy=req.user?._id
-// const userId=req.user?._id
  const searchUser=await UserModel.findOne({email:email})
  const logginUser=await UserModel.findOne({bodyy})
 if(searchUser&&searchUser._id==bodyy){
