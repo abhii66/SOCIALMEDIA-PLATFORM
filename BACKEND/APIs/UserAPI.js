@@ -78,7 +78,7 @@ userApp.post('/users/login',async(req,res)=>{
 })
 
 //user logout
-userApp.post('/users/logout',async(req,res)=>{
+userApp.get('/users/logout',async(req,res)=>{
     //delete token from the cookie storage
     res.clearCookie("token", {
         httpOnly: true,
