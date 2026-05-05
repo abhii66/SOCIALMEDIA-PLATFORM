@@ -6,6 +6,8 @@ import { userApp } from './APIs/UserAPI.js'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { postApp } from './APIs/PostAPI.js'
+import { adminApp } from './APIs/AdminAPI.js'
+import { FeedApp } from './APIs/FeedAPI.js'
 config()
 const app = exp()
 //body parser
@@ -29,6 +31,8 @@ app.use(exp.json())
 app.use(cookieParser())
 app.use('/user-api',userApp)
 app.use('/post-api',postApp)
+app.use('/admin-api',adminApp)
+app.use('/feed-api',FeedApp)
 const port=process.env.PORT
 //connect to db
 // console.log("ENV:", process.env.MONGO_URI);
