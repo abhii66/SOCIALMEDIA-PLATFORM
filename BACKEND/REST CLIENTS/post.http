@@ -18,3 +18,29 @@ Content-Type: application/json
     "postId":"69f8baf7dd2eb74896af5f99",
     "content":"What A Beautiful Night!"
 }
+
+###delete post
+PATCH http://localhost:2167/post-api/posts
+Content-Type: application/json
+
+{
+    "postId":"69f8baf7dd2eb74896af5f99",
+    "isPostActive":false
+}
+
+###like/unlike post
+PATCH http://localhost:2167/post-api/posts/69f8baf7dd2eb74896af5f99/like
+
+###comments on post
+PUT http://localhost:2167/post-api/posts/comments
+Content-Type: application/json
+
+{
+    "postId":"69f8baf7dd2eb74896af5f99",
+    "comment":"Surely it is. 😍"
+}
+###Reading posts with commented user info
+GET http://localhost:2167/post-api/posts/69f8baf7dd2eb74896af5f99
+
+###Delete comment
+DELETE http://localhost:2167/post-api/posts/69f8baf7dd2eb74896af5f99/comments/69f9ac6f9edc1c54b1b1b3c5
