@@ -23,3 +23,6 @@ GET http://localhost:2167/user-api/users/logout
 
 ###getting posts
 GET http://localhost:2167/user-api/posts
+
+###Search users
+GET http://localhost:2167/user-api/users/search?query=lexus

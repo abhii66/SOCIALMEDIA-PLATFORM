@@ -138,6 +138,26 @@ userApp.put("/users/following", verifyToken, async (req,res)=>{
     res.status(200).json({ message: "Following..." });
 })
 
+//search users
+userApp.get("/users/search", verifyToken, async(req,res)=>{
+    //get query from the req body
+    const {query} = req.query
+    //get users using query
+    const users = await UserModel.find({
+        $or: [
+            { firstName:{ $regex: `^${query}`, $options: "i"} },
+            { lastName:{ $regex: `^${query}`, $options: "i"} },
+            { email:{ $regex: `^${query}`, $options: "i"} }
+        ]
+    }, { firstName:1, lastName:1, email:1, profileImageUrl:1 })
+    //if users not found
+    if(users.length===0){
+        return res.status(404).json({message:`No results for '${query}' `})
+    }
+    //res
+    res.status(200).json({message:"Search results: ", payload:users})
+})
+
 //Page refresh
 userApp.get("/check-auth", verifyToken, (req,res)=>{
     res.status(200).json({
