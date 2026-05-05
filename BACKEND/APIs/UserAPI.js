@@ -91,60 +91,55 @@ userApp.get('/users/logout',async(req,res)=>{
 //reading all the posts
 userApp.get('/posts/fyp',async(req,res)=>{
     //read posts
-    const allPosts = await PostModel.find({isPostActive:"true"})
+    const allPosts=await PostModel.find({isPostActive:"true"})
     //send res
     res.status(200).json({message:"Posts: ",payload:allPosts})
 })
 
 //reading following posts
-userApp.get('/posts/following', verifyToken,async (req, res) => {
+userApp.get('/posts/following', verifyToken, async (req, res) => {
   try {
-    // read userId from token/middleware
-    const userId = req.user?._id;
-    const user = await UserModel.findById({ _id: userId });
+    const userId=req.user?._id;
+    const user=await UserModel.findById({ _id: userId });
     if (!user) {
-      return res.status(404).json({ message: "No user found" });
+      return res.status(404).json({ message:"No user found"});
     }
     const followingUsers = user.following
-console.log(followingUsers)
-    const allPosts = await PostModel.find({
-      author: { $in: followingUsers }
+    console.log(followingUsers)
+    const allPosts=await PostModel.find({
+      author: { $in:followingUsers }
     });
 
-    // send response
     res.status(200).json({
-      message: "Posts fetched successfully",
-      payload: allPosts
+      message:"Posts fetched successfully",
+      payload:allPosts
     });
 
   } catch (err) {
     res.status(500).json({
-      message: "Error fetching posts",
-      error: err.message
+      message:"Error fetching posts",
+      error:err.message
     });
   }
 });
 
-//follow-system
-userApp.put("/users/following",verifyToken,async (req,res)=>{
-const {email}=req.body
-const bodyy=req.user?._id
-// const userId=req.user?._id
- const searchUser=await UserModel.findOne({email:email})
- const logginUser=await UserModel.findOne({bodyy})
-if(searchUser&&searchUser._id==bodyy){
-    res.status(400).json({message:"Cannot follow your account."})
-}
- await UserModel.updateOne({_id:bodyy},
-    {$addToSet:{following:searchUser._id}})
+//following-system
+userApp.put("/users/following", verifyToken, async (req,res)=>{
+    const {email}=req.body
+    const bodyy=req.user?._id
+    const searchUser=await UserModel.findOne({email:email})
+    if(searchUser && searchUser._id==bodyy){
+        res.status(400).json({message:"Cannot follow your account."})
+    }
+    await UserModel.updateOne({_id:bodyy},
+        {$addToSet:{following:searchUser._id}})
     await UserModel.updateOne({_id:searchUser._id},
-    {$addToSet:{followers:bodyy}})
+        {$addToSet:{followers:bodyy}})
     res.status(200).json({ message: "Following..." });
-
 })
 
 //Page refresh
-userApp.get("/check-auth",verifyToken,(req,res)=>{
+userApp.get("/check-auth", verifyToken, (req,res)=>{
     res.status(200).json({
         message:"authenticated",
         payload:req.user

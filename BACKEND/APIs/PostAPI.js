@@ -45,4 +45,88 @@ postApp.put("/posts",verifyToken,async(req,res)=>{
     res.status(200).json({message:"Updated Successfully."})
 })
 
-//
+//delete post
+postApp.patch("/posts",verifyToken,async(req,res)=>{
+    //get userid form decoded token
+    const userId=req.user?._id
+    //get body from the req
+    const {postId,isPostActive}=req.body;
+    //find the post
+    let newPostStatus=await PostModel.findOne({_id:postId,author:userId})
+    //if post not found
+    if(!newPostStatus){
+        return res.status(404).json({message:"Post not found"})
+    }
+    //status check
+    if(newPostStatus.isPostActive===isPostActive){
+        return res.status(400).json({message:"No change in status"})
+    }
+    ///changing the status
+    const result=await PostModel.findByIdAndUpdate(postId,
+        { $set:{isPostActive:isPostActive} },
+        { new:true }
+    )
+    res.status(200).json({message:"Status updated",payload:result})
+})
+
+//like/unlike post
+postApp.patch("/posts/:id/like",verifyToken,async(req,res)=>{
+    //get the id from endpoint
+    const post=await PostModel.findById(req.params.id)
+    //get id
+    const userId=req.user?._id
+    //check if the userid is already in the likes
+    const alreadyLiked=post.likes.includes(userId)
+    //if alreadyLiked
+    if(alreadyLiked){
+        //unlike
+        await PostModel.findByIdAndUpdate(req.params.id,{ $pull:{likes:userId} })
+    }
+    else {
+        //like 
+        await PostModel.findByIdAndUpdate(req.params.id,{ $push:{likes:userId} })
+    }
+    //res
+    res.status(200).json({message: alreadyLiked ? "Unliked" : "Liked"})
+}
+)
+
+//Add a comment 
+postApp.put("/posts/comments",verifyToken,async(req,res)=>{
+    //get body from request
+    const {postId, comment}=req.body
+    //check post
+    const post=await PostModel.findOne({_id:postId,isPostActive:true}).populate("comments.user","email")
+    //if the post is not available
+    if(!post){
+        return res.status(404).json({message:"Post not found."})
+    }
+    //get user 
+    const userId=req.user?._id
+    //add comment
+    post.comments.push({ user: userId, comment: comment })
+    //save
+    await post.save()
+    //send res
+    res.status(201).json({message:"Comment added successfully.",payload:post})
+})
+
+//to get info of the commented user
+postApp.get('/posts/:id', verifyToken, async(req,res)=>{
+    const post = await PostModel.findById(req.params.id)
+        .populate("comments.user", "firstName email")
+        .populate("author", "firstName")
+    res.status(200).json({message:"user", payload:post})
+})
+
+//to delete comment
+postApp.delete("/posts/:postId/comments/:commentId", verifyToken, async(req,res)=>{
+    const {postId, commentId} = req.params
+    const post = await PostModel.findByIdAndUpdate(
+        postId,
+        { $pull: { comments: { _id: commentId } } },
+        { new: true }
+    ).populate("comments.user", "firstName email")
+    
+    res.status(200).json({message:"Comment deleted.", payload:post})
+})
