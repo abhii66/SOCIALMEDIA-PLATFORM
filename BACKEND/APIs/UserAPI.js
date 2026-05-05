@@ -115,10 +115,6 @@ if(searchUser&&searchUser._id==bodyy){
     {$addToSet:{following:searchUser._id}})
     await UserModel.updateOne({_id:searchUser._id},
     {$addToSet:{followers:bodyy}})
-// following.push(targetUserId);
-//     logginUser.followers.push(currentUserId);
-    // await searchUser.save();
-    // await logginUser.save();
     res.status(200).json({ message: "Following..." });
 
 })
