@@ -148,7 +148,7 @@ userApp.get("/users/search", verifyToken, async(req,res)=>{
             { firstName:{ $regex: `^${query}`, $options: "i"} },
             { lastName:{ $regex: `^${query}`, $options: "i"} },
             { email:{ $regex: `^${query}`, $options: "i"} }
-        ]
+        ],isUserActive:true 
     }, { firstName:1, lastName:1, email:1, profileImageUrl:1 })
     //if users not found
     if(users.length===0){
