@@ -89,10 +89,10 @@ userApp.post('/users/logout',async(req,res)=>{
 })
 //reading all the posts
 userApp.get('/posts',async(req,res)=>{
-    //read articles
+    //read posts
     const allPosts = await PostModel.find({isPostActive:"true"})
     //send res
-    res.status(200).json({message:"articles",payload:allPosts})
+    res.status(200).json({message:"Posts: ",payload:allPosts})
 })
 
 //Page refresh
