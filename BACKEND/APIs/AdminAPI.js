@@ -7,14 +7,24 @@ export const adminApp=exp.Router()
 
 //read all users
 adminApp.get('/users',verifyToken,async(req,res)=>{
+    //get username
+    const userRole=req.user?.firstName
+    if(userRole!=="Admin"){
+        return res.status(403).json({message:"Your not authorized to perform this task."})
+    }
     //get all the available files
-    const users=await UserModel.find({role:{$eq:"USER"}},{firstName:1,lastName:1,email:1,isUserActive:1})
+    const users=await UserModel.find({ firstName: { $nin: "Admin" }},{firstName:1,lastName:1,email:1,isUserActive:1})
     //send res 
     res.status(200).json({message:"Users",payload:users})
 })
 
 //block or activate user
 adminApp.patch("/users",verifyToken,async(req,res)=>{
+    //get username
+    const userRole=req.user?.firstName
+    if(userRole!=="Admin"){
+        return res.status(403).json({message:"Your not authorized to perform this task."})
+    }
     //get req body
     const {userId,isUserActive}=req.body
     //check if the user is available
