@@ -87,7 +87,6 @@ userApp.post('/users/logout',async(req,res)=>{
     })
     res.status(200).json({message:"Logout Success."})
 })
-
 //reading all the posts
 userApp.get('/posts',async(req,res)=>{
     //read articles
@@ -102,4 +101,24 @@ userApp.get("/check-auth",verifyToken,(req,res)=>{
         message:"authenticated",
         payload:req.user
     })
+})
+userApp.put("/users/following",verifyToken,async (req,res)=>{
+const {email}=req.body
+const bodyy=req.user?._id
+// const userId=req.user?._id
+ const searchUser=await UserModel.findOne({email:email})
+ const logginUser=await UserModel.findOne({bodyy})
+if(searchUser&&searchUser._id==bodyy){
+    res.status(400).json({message:"Cannot follow your account."})
+}
+ await UserModel.updateOne({_id:bodyy},
+    {$addToSet:{following:searchUser._id}})
+    await UserModel.updateOne({_id:searchUser._id},
+    {$addToSet:{followers:bodyy}})
+// following.push(targetUserId);
+//     logginUser.followers.push(currentUserId);
+    // await searchUser.save();
+    // await logginUser.save();
+    res.status(200).json({ message: "Following..." });
+
 })
