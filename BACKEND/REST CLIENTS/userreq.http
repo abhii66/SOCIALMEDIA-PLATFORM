@@ -19,13 +19,7 @@ Content-Type: application/json
 }
 
 ###user logout
-POST http://localhost:2167/user-api/users/logout
-Content-Type: application/json
-
-{
-    "email":"lexushamilton123@gmail.com",
-    "password":"lexushamilton"
-}
+GET http://localhost:2167/user-api/users/logout
 
 ###getting posts
 GET http://localhost:2167/user-api/posts
