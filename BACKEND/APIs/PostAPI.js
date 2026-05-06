@@ -72,7 +72,8 @@ postApp.patch("/posts",verifyToken,async(req,res)=>{
 //like/unlike post
 postApp.patch("/posts/:id/like",verifyToken,async(req,res)=>{
     //get the id from endpoint
-    const post=await PostModel.findById(req.params.id)
+    const postId=req.params.id
+    const post=await PostModel.findById(postId)
     //get id
     const userId=req.user?._id
     //check if the userid is already in the likes
@@ -81,10 +82,14 @@ postApp.patch("/posts/:id/like",verifyToken,async(req,res)=>{
     if(alreadyLiked){
         //unlike
         await PostModel.findByIdAndUpdate(req.params.id,{ $pull:{likes:userId} })
+        //removing the post to user's liked posts
+        await UserModel.findByIdAndUpdate(userId, { $pull: { likedPosts: postId } })
     }
     else {
         //like 
         await PostModel.findByIdAndUpdate(req.params.id,{ $push:{likes:userId} })
+        //adding the post to user's liked posts
+        await UserModel.findByIdAndUpdate(userId, { $push: { likedPosts: postId } })
     }
     //res
     res.status(200).json({message: alreadyLiked ? "Unliked" : "Liked"})
