@@ -37,9 +37,10 @@ userApp.post("/users",upload.single("profileImageUrl"),async(req,res)=>{
 //user login
 userApp.post('/users/login',async(req,res)=>{
     //get data from req
-    const {email,password}=req.body
+    const {idCreds,password}=req.body
+    // console.log(idCreds)
     //check email if it exists
-    let user = await UserModel.findOne({email:email})
+    let user = await UserModel.findOne({$or:[{email:idCreds},{userName:idCreds}]})
     //if email isnt found
     if(!user){
         return res.status(400).json({message:"Invalid email."})
