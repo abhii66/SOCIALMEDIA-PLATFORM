@@ -96,7 +96,7 @@ postApp.put("/posts/comments",verifyToken,async(req,res)=>{
     //get body from request
     const {postId, comment}=req.body
     //check post
-    const post=await PostModel.findOne({_id:postId,isPostActive:true}).populate("comments.user","email")
+    const post=await PostModel.findOne({_id:postId,isPostActive:true}).populate("comments.user","userName")
     //if the post is not available
     if(!post){
         return res.status(404).json({message:"Post not found."})
@@ -114,8 +114,8 @@ postApp.put("/posts/comments",verifyToken,async(req,res)=>{
 //to get info of the commented user
 postApp.get('/posts/:id', verifyToken, async(req,res)=>{
     const post = await PostModel.findById(req.params.id)
-        .populate("comments.user", "firstName email")
-        .populate("author", "firstName")
+        .populate("comments.user", "firstName userName email")
+        .populate("author", "firstName userName")
     res.status(200).json({message:"user", payload:post})
 })
 
