@@ -90,6 +90,60 @@ userApp.get('/users/logout',async(req,res)=>{
     res.status(200).json({message:"Logout Success."})
 })
 
+//update user-profile
+userApp.put('/users/update-profile',verifyToken,async(req,res)=>{
+    //get body from the req
+    const {firstName,userName,bio}=req.body || {}
+    const userId=req.user?._id
+    // console.log(userId)
+    const updates={}
+    //check the fields that have been passed
+    if(firstName!==undefined) updates.firstName=firstName;
+    if(userName!==undefined) updates.userName=userName;
+    if(bio!==undefined) updates.bio=bio;
+    //if updates objects is empty
+    if(Object.keys(updates).length===0){
+        return res.status(400).json({message:"No updates done."})
+    }
+    const updatedProfile=await UserModel.findByIdAndUpdate(userId,
+        { $set: updates },
+        { new:true }
+    )
+    //res
+    res.status(200).json({message:"Profile Updated."})
+})
+
+//Change password
+userApp.put("/users/password",verifyToken,async(req,res)=>{
+    //check the current password and new password are same
+    const {currentPassword,newPassword}=req.body
+    //console.log(currentPassword)
+    //get the userId
+    const userId=req.user?._id
+    //get current password of user
+    const user=await UserModel.findById(userId)
+    //check the current password of req and user are not same
+    const passwordMatch = await compare(currentPassword,user.password)
+    //if password doesnt match
+    if(!passwordMatch){
+        return res.status(401).json({message:"Enter correct password to change password."})
+    }
+    //hash the password
+    const sameValidation=await compare(newPassword,user.password)
+    //if current and new passwords are same
+    if(sameValidation===true){
+        return res.status(400).json({message:"Current and new passwords cannot be same."})
+    }
+    const hashedPassword=await hash(newPassword,12)
+    //replace current pass w hashed new password
+    const result = await UserModel.findByIdAndUpdate(
+        userId,
+        {$set:{password:hashedPassword}}
+        )
+    //res
+    res.status(200).json({message:"Password changed successfully."})
+})
+
 //reading all the posts
 userApp.get('/posts/fyp',async(req,res)=>{
     //read posts
