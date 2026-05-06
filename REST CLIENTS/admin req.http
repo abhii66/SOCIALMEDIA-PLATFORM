@@ -1,0 +1,42 @@
+### =========================================
+### ADMIN LOGIN (run first)
+### =========================================
+POST http://localhost:8000/user-api/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+
+
+### =========================================
+### GET ALL USERS
+### =========================================
+GET http://localhost:8000/admin-api/users
+
+
+### =========================================
+### BLOCK USER
+### Set isUserActive false
+### =========================================
+PATCH http://localhost:8000/admin-api/users
+Content-Type: application/json
+
+{
+  "userId": "69f9a61127e85653c00390d8",
+  "isUserActive": false
+}
+
+
+### =========================================
+### ACTIVATE USER
+### Set isUserActive true
+### =========================================
+PATCH http://localhost:8000/admin-api/users
+Content-Type: application/json
+
+{
+  "userId": "69f9a61127e85653c00390d8",
+  "isUserActive": true
+}
