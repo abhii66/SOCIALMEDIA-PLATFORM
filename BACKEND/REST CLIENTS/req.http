@@ -16,11 +16,28 @@ Content-Type: application/json
 
 {
     "idCreds":"lexus_la123",
-    "password":"lexushamilton"
+    "password":"lexusla12345"
 }
 
 ###user logout
 GET http://localhost:2167/user-api/users/logout
+
+###update password
+PUT http://localhost:2167/user-api/users/password
+Content-Type: application/json
+
+{
+    "currentPassword":"lexushamilton",
+    "newPassword":"lexusla12345"
+}
+
+###update profile
+PUT http://localhost:2167/user-api/users/update-profile
+Content-Type: application/json
+
+{
+    "bio":"Weirdo!!!"
+}
 
 ###getting posts
 GET http://localhost:2167/user-api/posts
