@@ -44,3 +44,6 @@ GET http://localhost:2167/user-api/posts
 
 ###Search users
 GET http://localhost:2167/user-api/users/search?query=nexu
+
+###Reading liked posts
+GET http://localhost:2167/user-api/users/liked-posts

@@ -194,6 +194,16 @@ userApp.put("/users/following", verifyToken, async (req,res)=>{
     res.status(200).json({ message: "Following..." });
 })
 
+//to view liked posts
+userApp.get('/users/liked-posts', verifyToken, async(req,res)=>{
+    //get body from req
+    const userId=req.user?._id
+    //find user
+    const user=await UserModel.findById(userId).populate("likedPosts")
+    //res 
+    res.status(201).json({message:"Liked Posts: ",payload:user.likedPosts})
+})
+
 //search users
 userApp.get("/users/search", verifyToken, async(req,res)=>{
     //get query from the req body
