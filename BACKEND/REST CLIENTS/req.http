@@ -15,7 +15,7 @@ POST http://localhost:2167/user-api/users/login
 Content-Type: application/json
 
 {
-    "email":"lexushamilton123@gmail.com",
+    "idCreds":"lexus_la123",
     "password":"lexushamilton"
 }
 
@@ -26,4 +26,4 @@ GET http://localhost:2167/user-api/users/logout
 GET http://localhost:2167/user-api/posts
 
 ###Search users
-GET http://localhost:2167/user-api/users/search?query=nexus
+GET http://localhost:2167/user-api/users/search?query=nexu
