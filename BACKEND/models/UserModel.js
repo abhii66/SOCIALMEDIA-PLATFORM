@@ -8,6 +8,11 @@ const userSchema=new Schema({
     lastName:{
         type:String
     },
+    userName:{
+        type:String,
+        required:[true,"Create a username"],
+        unique:[true,"Username not available, try another."]
+    },
     email:{
         type:String,
         required:[true,"email is required."],

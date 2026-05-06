@@ -63,6 +63,7 @@ userApp.post('/users/login',async(req,res)=>{
         email:user.email,
         bio:user.bio,
         firstName:user.firstName,
+        userName:user.userName,
         profileImageUrl:user.profileImageUrl,
         lastName:user.lastName,
     },process.env.SECRET_KEY,{expiresIn:"1hr"})
@@ -147,9 +148,9 @@ userApp.get("/users/search", verifyToken, async(req,res)=>{
         $or: [
             { firstName:{ $regex: `^${query}`, $options: "i"} },
             { lastName:{ $regex: `^${query}`, $options: "i"} },
-            { email:{ $regex: `^${query}`, $options: "i"} }
+            { userName:{ $regex: `^${query}`, $options: "i"} }
         ],isUserActive:true 
-    }, { firstName:1, lastName:1, email:1, profileImageUrl:1 })
+    }, { firstName:1, lastName:1,userName:1, email:1, profileImageUrl:1 })
     //if users not found
     if(users.length===0){
         return res.status(404).json({message:`No results for '${query}' `})
