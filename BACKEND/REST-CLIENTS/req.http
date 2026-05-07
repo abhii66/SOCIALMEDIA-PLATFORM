@@ -1,0 +1,57 @@
+###user registration
+POST http://localhost:2167/user-api/users
+Content-Type: application/json
+
+{
+    "firstName":"rajeshwari",
+    "lastName":"Agamannolla",
+    "userName":"ramjieee",
+    "email":"24eg105j02@anurag.edu.in",
+    "password":"ramjie@1234"
+}
+
+###user login
+POST http://localhost:2167/user-api/users/login
+Content-Type: application/json
+
+{
+      "idCreds":"24eg105j02@anurag.edu.in",
+    "password":"ramjie@1234"
+}
+
+###user logout
+GET http://localhost:2167/user-api/users/logout
+
+###update password
+PUT http://localhost:2167/user-api/users/password
+Content-Type: application/json
+
+{
+    "currentPassword":"lexushamilton",
+    "newPassword":"lexusla12345"
+}
+
+###update profile
+PUT http://localhost:2167/user-api/users/update-profile
+Content-Type: application/json
+
+{
+    "bio":"Weirdo!!!"
+}
+
+###getting posts
+GET http://localhost:2167/user-api/posts
+
+###Search users
+GET http://localhost:2167/user-api/users/search?query=nexu
+###folling/unfollowing
+PUT http://localhost:2167/user-api/users/following
+Content-Type: application/json
+
+{
+    "email":"24eg105j02@anurag.edu.in"
+}
+### saved the post system
+PUT http://localhost:2167/user-api/users/saved/69fb0ec2441db96e35465cef
+### get saved posts 
+GET http://localhost:2167/user-api/users/saved
