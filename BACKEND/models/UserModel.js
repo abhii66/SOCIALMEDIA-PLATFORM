@@ -41,7 +41,11 @@ const userSchema=new Schema({
     isUserActive:{
         type:Boolean,
         default:true
-    }
+    },
+     savedPosts:[{
+ type: Types.ObjectId,
+      ref: "post"
+    }]
 },
 {
     versionKey:false,
