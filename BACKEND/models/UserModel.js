@@ -38,6 +38,10 @@ const userSchema=new Schema({
         type: Types.ObjectId,
         ref: "user"
     }],
+    likedPosts:[{
+        type:Types.ObjectId,
+        ref: "post"
+    }],
     isUserActive:{
         type:Boolean,
         default:true
