@@ -1,0 +1,5 @@
+### GET USER FEED
+GET http://localhost:8000/feed-api/
+
+### GET EXPLORE POSTS
+GET http://localhost:8000/feed-api/explore

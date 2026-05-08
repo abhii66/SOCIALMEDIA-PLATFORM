@@ -1,0 +1,70 @@
+###User Signup
+POST http://localhost:8000/user-api/register
+Content-Type: application/json
+
+{
+    "name":"ramu",
+    "username":"Ramu",
+    "email":"ramu@gmail.com",
+    "password":"Ramu@123"
+}
+
+###User Login
+POST http://localhost:8000/user-api/login
+Content-Type: application/json
+
+{
+    "email":"ravi@gmail.com",
+    "password":"Ravi@123"
+}
+
+###Check Authorization
+GET http://localhost:8000/user-api/check-auth
+
+###User Logout
+GET http://localhost:8000/user-api/logout
+
+###Get Current User Profile
+GET http://localhost:8000/user-api/mine
+
+###Get User Profile By ID
+GET http://localhost:8000/user-api/profile/69fb0f32d11b4ea55f19228c
+
+###Update User Profile(without ProfilePic)
+PUT http://localhost:8000/user-api/update
+Content-Type: application/json
+
+{
+    "name":"Vengala Abhinay",
+    "bio":"Test Bio for the testing of updation request or operation"
+}
+
+### Update User Profile With Image
+PUT http://localhost:8000/user-api/update
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="name"
+
+Abhinay
+--boundary
+Content-Disposition: form-data; name="bio"
+
+MERN Stack Developer | Learning Backend
+--boundary
+Content-Disposition: form-data; name="profilePic"; filename="Screenshot 2025-01-07 081223.png"
+Content-Type: image/png
+
+< ../assests/img.png
+--boundary--
+
+
+###Follow User By ID
+PUT http://localhost:8000/user-api/follow/69fb0a3a132e78247602a83f
+
+###Unfollow User By ID
+PUT http://localhost:8000/user-api/unfollow/69f9a9420516d37848c7aaf7
+
+###Search User 
+GET http://localhost:8000/user-api/search?q=ramu
+

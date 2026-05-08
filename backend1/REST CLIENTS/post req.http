@@ -1,0 +1,43 @@
+### CREATE POST
+POST http://localhost:8000/post-api/create
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="caption"
+
+User 3 POST 1
+--boundary
+Content-Disposition: form-data; name="image"; filename="post.png"
+Content-Type: image/png
+
+< ../assests/img.png
+--boundary--
+
+### GET MY POSTS
+GET http://localhost:8000/post-api/myposts
+
+### GET SINGLE POST BY ID
+GET http://localhost:8000/post-api/69f9c1aa5b40c14413baa9a9
+
+### SOFT DELETE POST
+DELETE http://localhost:8000/post-api/PASTE_POST_ID_HERE
+
+### LIKE / UNLIKE POST
+PUT http://localhost:8000/post-api/69fad471740e094f096e4497/like
+
+### GET USERS WHO LIKED THE POST
+GET http://localhost:8000/post-api/69f9c1aa5b40c14413baa9a9/likes
+
+### ADD COMMENT TO OTHER USER POST
+PUT http://localhost:8000/post-api/69fab89c9411e23e9c423b4f/comment
+Content-Type: application/json
+
+{
+    "text": "Awesome post 🔥"
+}
+
+### GET ALL COMMENTS OF A POST
+GET http://localhost:8000/post-api/69fab89c9411e23e9c423b4f/comments
+
+### DELETE COMMENT
+DELETE http://localhost:8000/post-api/69fab89c9411e23e9c423b4f/comment/69fac4372eb9d9fddd5e4259
