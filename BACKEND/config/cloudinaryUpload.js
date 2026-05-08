@@ -1,11 +1,14 @@
-import cloudinary from "./cloudinary.js";
+import cloudinary from './cloudinary.js'
 
-export const uploadToCloudinary = (buffer) => {
+export const uploadToCloudinary = (fileBuffer, folder) => {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream({ folder: "socials_users" }, (err, result) => {
-      if (err) return reject(err);
-      resolve(result);
-    });
-    stream.end(buffer);
-  });
-};
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: folder || 'social_media' },
+      (error, result) => {
+        if (error) reject(error)
+        else resolve(result.secure_url)
+      }
+    )
+    stream.end(fileBuffer)
+  })
+}

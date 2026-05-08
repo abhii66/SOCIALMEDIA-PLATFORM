@@ -1,60 +1,61 @@
-import {Schema,model,Types} from "mongoose"
+import mongoose, { Schema } from "mongoose";
 
-const userSchema=new Schema({
-    firstName:{
-        type:String,
-        required:[true,"First name is required."],
+const userSchema = new Schema({
+     name: {
+        type: String,
+        required: [true, "Name is required"]
     },
-    lastName:{
-        type:String
-    },
-    userName:{
+    username:{
         type:String,
-        required:[true,"Create a username"],
-        unique:[true,"Username not available, try another."]
+        required:[true,"Username is required"],
+        unique:[true,"Username already exists"]
     },
     email:{
         type:String,
-        required:[true,"email is required."],
-        unique:[true,"email already exists."]
-
+        required:[true,"Email is required"],
+        unique:[true,"Email already exists"]
     },
     password:{
         type:String,
         required:[true,"Password is required"]
     },
-    profileImageUrl:{
-        type:String
+    bio:{
+        type:String,
+        default:""
     },
-    bio: {
-        type: String,
-        default: ""
+    profilePic:{
+        type:String,
+        default:""
     },
-    followers: [{
-        type: Types.ObjectId,
-        ref: "user"
-    }],
-    following: [{
-        type: Types.ObjectId,
-        ref: "user"
-    }],
-    likedPosts:[{
-        type:Types.ObjectId,
-        ref: "post"
-    }],
+    followers:[
+        {
+            type: Schema.Types.ObjectId,
+            ref:"user"
+        }
+    ],
+    following:[
+        {
+            type: Schema.Types.ObjectId,
+            ref:"user"
+        }
+    ],
     isUserActive:{
         type:Boolean,
         default:true
     },
-     savedPosts:[{
- type: Types.ObjectId,
-      ref: "post"
-    }]
-},
-{
-    versionKey:false,
+    isAdmin: {
+    type: Boolean,
+    default: false
+    },
+    isPrivate: {
+        type: Boolean,
+        default: false
+    }
+},{
     timestamps:true,
+    versionKey:false,
     strict:"throw"
-})
+});
 
-export const UserModel=model("user",userSchema)
+export const UserModel =
+    mongoose.models.user || mongoose.model("user", userSchema);

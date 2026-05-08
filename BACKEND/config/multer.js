@@ -1,20 +1,20 @@
-import multer from "multer";
+import multer from 'multer'
+
+const storage = multer.memoryStorage()
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true)
+  } else {
+    cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed.'), false)
+  }
+}
 
 export const upload = multer({
-  //store in RAM
-  storage: multer.memoryStorage(),
-  //to avoid RAM overflow
+  storage,
+  fileFilter,
   limits: {
-    fileSize: 1 * 1024 * 1024, // 2MB
+    fileSize: 5 * 1024 * 1024, // 5 MB max
   },
-  //for security validation
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
-      cb(null, true);
-    } else {
-      const err = new Error("Only JPG and PNG allowed");
-      err.status = 400;
-      cb(err, false);
-    }
-  },
-});
+})

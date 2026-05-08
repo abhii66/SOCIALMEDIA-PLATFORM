@@ -1,47 +1,46 @@
-// author, content, imageUrl, likes[], comments[]
-
-import { Schema,model,Types } from "mongoose";
-
-const commentSchema = new Schema({
-    user: {
-        type: Types.ObjectId,
-        ref: "user",
-        required: true
-    },
-    comment: {
-        type: String,
-        required: true
-    }
-}, { timestamps: true })
+import mongoose, { Schema } from "mongoose";
 
 const postSchema = new Schema({
     author: {
-        type: Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "user",
-        required: [true, "Author is required."]
+        required: [true, "Author id is required"]
     },
-    content: {
-        type: String,
-        required: [true, "Content is required."]
-    },
+
     imageUrl: {
+        type: String,
+        required: [true, "Post image is required"]
+    },
+
+    caption: {
         type: String,
         default: ""
     },
-    likes: [{
-        type: Types.ObjectId,
-        ref: "user"
-    }],
-    comments: [commentSchema],
-    isPostActive:{
-        type:Boolean,
-        default:true
-    }
-},
-{
-    versionKey: false,
-    timestamps: true,
-    strict: "throw"
-})
 
-export const PostModel = model("post", postSchema)
+    likes: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "user"
+        }
+    ],
+
+    comments: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "comment"
+        }
+    ],
+
+    isPostActive: {
+        type: Boolean,
+        default: true
+    }
+
+}, {
+    timestamps: true,
+    versionKey: false,
+    strict: "throw"
+});
+
+export const PostModel =
+    mongoose.models.posts || mongoose.model("posts", postSchema);
