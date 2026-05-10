@@ -202,6 +202,100 @@ else{
 }
 })
 
+//to view user's followers
+userApp.get('/users/followers/:id',verifyToken,async(req,res)=>{
+    //get userId from endpoint
+    const userId=req.params.id
+    // console.log(userId)
+    //get user
+    const user=await UserModel.findById(userId).populate("followers")
+    //if user not found/not active
+    if(!user || user.isUserActive===false){
+        return res.status(404).json({message:"User Not Found"})
+    }
+    //res
+    res.status(200).json({message:"Follwers: ",payload:user.followers})
+})
+
+//to view following users
+userApp.get('/users/following/:id',verifyToken,async(req,res)=>{
+    //get userId from endpoint
+    const userId=req.params.id
+    // console.log(userId)
+    //get user
+    const user=await UserModel.findById(userId).populate("following")
+    //if user not found/not active
+    if(!user || user.isUserActive===false){
+        return res.status(404).json({message:"User Not Found"})
+    }
+    //res
+    res.status(200).json({message:"Following: ",payload:user.following})
+})
+
+//to view own followers
+userApp.get('/users/followers',verifyToken,async(req,res)=>{
+    //get userId from token
+    const userId=req.user?._id
+    // console.log(userId)
+    //get user
+    const user=await UserModel.findById(userId).populate("followers")
+    //if user not found
+    if(!user){
+        return res.status(404).json({message:"User Not Found"})
+    }
+    //res
+    res.status(200).json({message:"Followers: ",payload:user.followers})
+})
+
+//to view own following
+userApp.get('/users/following',verifyToken,async(req,res)=>{
+    //get userId from token
+    const userId=req.user?._id
+    // console.log(userId)
+    //get user
+    const user=await UserModel.findById(userId).populate("following")
+    //if user not found
+    if(!user){
+        return res.status(404).json({message:"User Not Found"})
+    }
+    //res
+    res.status(200).json({message:"Following: ",payload:user.following})
+})
+
+
+//to view profiles
+userApp.get('/users/profile/:id',verifyToken,async(req,res)=>{
+    //get userId from endpoint
+    const userId=req.params.id
+    //get user by id
+    const user=await UserModel.findById(userId)
+    //if not found
+    if(!user){
+        return res.status(404).json({message:"User Not Found."})
+    }
+    // fetch their posts too
+    const posts=await PostModel.find({author:userId}).sort({createdAt:-1})
+    //res
+    res.status(200).json({message:"Profile: ",payload:user,posts})
+})
+
+//to view own profile
+userApp.get('/users/profile',verifyToken,async(req,res)=>{
+    //get userId from token
+    const userId=req.user?._id
+    //get user by id
+    const user=await UserModel.findById(userId)
+    //if not found
+    if(!user){
+        return res.status(404).json({message:"User Not Found."})
+    }
+    // fetch posts
+    const posts=await PostModel.find({author:userId}).sort({createdAt:-1})
+    //res
+    res.status(200).json({message:"Profile: ",payload:user,posts})
+})
+
+
 //to view liked posts
 userApp.get('/users/liked-posts', verifyToken, async(req,res)=>{
     //get body from req
