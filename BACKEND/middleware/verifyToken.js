@@ -13,7 +13,7 @@ export const verifyToken = (req,res,next)=>{
     try{
         //if token exists
         const decodeToken=verify(token,process.env.SECRET_KEY)
-        console.log(decodeToken)
+        // console.log(decodeToken)
         req.user=decodeToken
         next()
     }
