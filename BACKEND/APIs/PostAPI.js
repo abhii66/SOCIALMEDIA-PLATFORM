@@ -2,22 +2,32 @@ import exp from 'express'
 import { verifyToken } from '../middleware/verifyToken.js'
 import { PostModel } from '../models/PostModel.js'
 import { UserModel } from '../models/UserModel.js'
+import {upload} from '../config/multer.js'
+import { uploadToCloudinary } from '../config/cloudinaryUpload.js'
 export const postApp=exp.Router()
 
 //new post
-postApp.post("/posts",verifyToken,async(req,res)=>{
+postApp.post("/posts",verifyToken,upload.single("imageUrl"),async(req,res)=>{
     //get body from the req
-    const postInfo=req.body
+    const {content, category}=req.body
+    //get author id token
+    const authorId = req.user?._id;
     // console.log(postInfo)
-    let newPost=await UserModel.findById(postInfo.author);
+    let user=await UserModel.findById(authorId);
     //if user not found
-    if(!newPost){
+    if(!user){
         return res.status(404).json({message:"User Not Found."})
     }
+    //save the pic to cloudinary(if picture is uploaded)
+    let imageUrl = null
+    if (req.file) {
+        const result = await uploadToCloudinary(req.file.buffer)
+        imageUrl = result.secure_url
+    }
     //save
-    let newDoc=new PostModel(postInfo)
+    let newDoc=new PostModel({content,category,author:authorId,imageUrl})
     await newDoc.save();
-    return res.status(201).json({message:"Post Completed."})
+    return res.status(201).json({message:"Post Added."})
 })
 
 //reading own posts

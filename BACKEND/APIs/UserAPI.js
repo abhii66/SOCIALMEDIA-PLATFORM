@@ -156,7 +156,7 @@ userApp.get('/posts/fyp',async(req,res)=>{
         query.category={$in:user.preferredCategories}
     }
     //read posts
-    const allPosts=await PostModel.find(query).sort({createdAt:-1})
+    const allPosts=await PostModel.find(query).populate("author", "firstName lastName userName profileImageUrl").sort({createdAt:-1})
     //send res
     res.status(200).json({message:"Posts: ",payload:allPosts})
 })
@@ -184,7 +184,7 @@ userApp.get('/posts/following', verifyToken, async (req, res) => {
     console.log(followingUsers)
     const allPosts=await PostModel.find({
       author: { $in:followingUsers }
-    });
+    }).populate("author","firstName lastName userName profileImageUrl").sort({createdAt:-1})
 
     res.status(200).json({
       message:"Posts fetched successfully",
@@ -377,9 +377,10 @@ userApp.get("/users/saved", verifyToken,async (req,res)=>{
 })
 
 //Page refresh
-userApp.get("/check-auth", verifyToken, (req,res)=>{
+userApp.get("/check-auth",verifyToken,async(req,res)=>{
+    const user=await UserModel.findById(req.user._id).select("-password")
     res.status(200).json({
         message:"authenticated",
-        payload:req.user
+        payload: user
     })
 })
