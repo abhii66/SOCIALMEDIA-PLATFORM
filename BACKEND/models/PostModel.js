@@ -20,6 +20,11 @@ const postSchema = new Schema({
         ref: "user",
         required: [true, "Author is required."]
     },
+    category: {
+        type: String,
+        enum: ["Music","Art","Food","Travel","Fitness","Gaming","Thoughts","Other"],
+        default: "Other"
+    },
     content: {
         type: String,
         required: [true, "Content is required."]
