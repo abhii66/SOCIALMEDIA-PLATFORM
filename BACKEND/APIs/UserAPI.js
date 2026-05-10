@@ -146,10 +146,30 @@ userApp.put("/users/password",verifyToken,async(req,res)=>{
 
 //reading all the posts
 userApp.get('/posts/fyp',async(req,res)=>{
+    //get user id from body
+    const userId=req.user?._id
+    //get user by id
+    const user=await UserModel.findById(userId)
+    let query={isPostActive:true}
+    //get preferences if user has any
+    if(user?.preferredCategories?.length>0){
+        query.category={$in:user.preferredCategories}
+    }
     //read posts
-    const allPosts=await PostModel.find({isPostActive:"true"})
+    const allPosts=await PostModel.find(query).sort({createdAt:-1})
     //send res
     res.status(200).json({message:"Posts: ",payload:allPosts})
+})
+
+//change preferred content
+userApp.put('/users/preferences',verifyToken,async(req,res)=>{
+    const {preferredCategories}=req.body
+    const userId=req.user?._id
+    await UserModel.findByIdAndUpdate(userId,
+        {$set:{preferredCategories}},
+        {new:true}
+    )
+    res.status(200).json({message:"Preferences updated."})
 })
 
 //reading following posts

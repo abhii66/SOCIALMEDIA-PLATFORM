@@ -40,7 +40,7 @@ Content-Type: application/json
 }
 
 ###getting posts
-GET http://localhost:2167/user-api/posts
+GET http://localhost:2167/user-api/posts/fyp
 
 ###Search users
 GET http://localhost:2167/user-api/users/search?query=nexu

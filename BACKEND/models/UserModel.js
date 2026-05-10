@@ -47,8 +47,12 @@ const userSchema=new Schema({
         default:true
     },
      savedPosts:[{
- type: Types.ObjectId,
-      ref: "post"
+        type: Types.ObjectId,
+        ref: "post"
+    }],
+    preferredCategories:[{
+    type: String,
+    enum: ["Music","Art","Food","Travel","Fitness","Gaming","Thoughts","Other"]
     }]
 },
 {
