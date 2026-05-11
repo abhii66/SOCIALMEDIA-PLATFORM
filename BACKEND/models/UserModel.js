@@ -24,7 +24,9 @@ const userSchema=new Schema({
         required:[true,"Password is required"]
     },
     profileImageUrl:{
-        type:String
+        type:String,
+         default: ""
+
     },
     bio: {
         type: String,
@@ -51,6 +53,7 @@ const userSchema=new Schema({
       ref: "post"
     }]
 },
+
 {
     versionKey:false,
     timestamps:true,

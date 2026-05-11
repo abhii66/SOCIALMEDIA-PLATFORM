@@ -7,6 +7,7 @@ import { verifyToken } from '../middleware/verifyToken.js'
 import { config } from 'dotenv'
 import {upload} from '../config/multer.js'
 import {uploadToCloudinary} from '../config/cloudinaryUpload.js'
+// import {upload} from '../middleware/uploadImages.js'
 const {sign}=jwt
 export const userApp=exp.Router()
 
@@ -14,13 +15,15 @@ export const userApp=exp.Router()
 userApp.post("/users",upload.single("profileImageUrl"),async(req,res)=>{
     //get user from body
     const newUser=req.body
-    //upload image to cloudinary from memoryStorage
+    // upload image to cloudinary from memoryStorage
     // upload image to cloudinary if file exists
     if(req.file){
         const cloudinaryResult = await uploadToCloudinary(req.file.buffer)
         newUser.profileImageUrl = cloudinaryResult.secure_url
     }
-
+// if(!req.file)
+//   return  res.json({message:"plz upload the file"})
+// newUser.profileImageUrl = req.file.path
     //hash the password
     const hashedPassword=await hash(newUser.password,12)
     //replace plain password with hashed password
@@ -147,7 +150,13 @@ userApp.put("/users/password",verifyToken,async(req,res)=>{
 //reading all the posts
 userApp.get('/posts/fyp',async(req,res)=>{
     //read posts
-    const allPosts=await PostModel.find({isPostActive:"true"})
+    const allPosts=await PostModel.find({isPostActive:"true"}).lean()
+    await Promise.all(
+    allPosts.map(async (post)=>{
+const user =await UserModel.findById(post.author)
+post["author_name"]=user.firstName+user.lastName
+    })
+)
     //send res
     res.status(200).json({message:"Posts: ",payload:allPosts})
 })

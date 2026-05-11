@@ -2,19 +2,30 @@ import exp from 'express'
 import { verifyToken } from '../middleware/verifyToken.js'
 import { PostModel } from '../models/PostModel.js'
 import { UserModel } from '../models/UserModel.js'
+import { upload } from '../config/multer.js'
+import { uploadToCloudinary } from '../config/cloudinaryUpload.js'
+// import {upload} from '../middleware/uploadImages.js'
 export const postApp=exp.Router()
-
 //new post
-postApp.post("/posts",verifyToken,async(req,res)=>{
+postApp.post("/posts",upload.single("imageUrl"),verifyToken,async(req,res)=>{
     //get body from the req
     const postInfo=req.body
+     postInfo.author=req.user?._id
     // console.log(postInfo)
     let newPost=await UserModel.findById(postInfo.author);
     //if user not found
     if(!newPost){
         return res.status(404).json({message:"User Not Found."})
     }
-    //save
+    // if(!req.file){
+    //     return res.json({message:"plz upload posts"})
+    // }
+    // postInfo.imageUrl = req.file.path
+    // //save
+      if(req.file){
+            const cloudinaryResult = await uploadToCloudinary(req.file.buffer)
+            postInfo.imageUrl = cloudinaryResult.secure_url
+        }
     let newDoc=new PostModel(postInfo)
     await newDoc.save();
     return res.status(201).json({message:"Post Completed."})
