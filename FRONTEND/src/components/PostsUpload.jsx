@@ -24,28 +24,6 @@ const ImageIcon = () => (
   </svg>
 )
 
-// const GifIcon = () => (
-//   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-//     <rect x="2" y="6" width="20" height="12" rx="3" stroke="currentColor" strokeWidth="1.8" />
-//     <text x="5" y="16" fontSize="8" fontWeight="700" fill="currentColor" fontFamily="sans-serif">GIF</text>
-//   </svg>
-// )
-
-// const PollIcon = () => (
-//   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-//     <rect x="3" y="12" width="4" height="9" rx="1" stroke="currentColor" strokeWidth="1.8" />
-//     <rect x="10" y="7" width="4" height="14" rx="1" stroke="currentColor" strokeWidth="1.8" />
-//     <rect x="17" y="3" width="4" height="18" rx="1" stroke="currentColor" strokeWidth="1.8" />
-//   </svg>
-// )
-
-// const LocationIcon = () => (
-//   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-//     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-//     <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.8" />
-//   </svg>
-// )
-
 // ── PostsUpload Component ──────────────────
 function PostsUpload() {
   const navigate = useNavigate()
@@ -184,20 +162,6 @@ function PostsUpload() {
               {currentUser?.userName || currentUser?.firstName}
             </div>
 
-{/* 
-            Audience selector
-            <button
-              onClick={() => setAudience(a => a === "Anyone" ? "Followers" : "Anyone")}
-              style={{
-                background: "none", border: "none",
-                fontSize: 13, color: "#aaa",
-                cursor: "pointer", fontFamily: "inherit",
-                padding: 0, marginBottom: 8,
-              }}
-            >
-              {audience} can reply ▾
-            </button> */}
-
             {/* Text area */}
             <textarea
               value={text}
@@ -282,9 +246,6 @@ function PostsUpload() {
               />
               {[
                 { Icon: ImageIcon, action: () => fileRef.current?.click(), label: "Image" },
-                // { Icon: GifIcon,     action: () => {},                       label: "GIF"   },
-                // { Icon: PollIcon,    action: () => {},                       label: "Poll"  },
-                // { Icon: LocationIcon,action: () => {},                       label: "Location" },
               ].map(({ Icon, action, label }) => (
                 <button
                   key={label}
