@@ -68,7 +68,14 @@ function Footer({
               key={key}
               onClick={() => {
                 if(key==='compose'){
-                  navigate('/postsupload')
+                  navigate('/app/postsupload')
+                }
+                if(key==='profile')
+                {
+                  navigate('/app/profile')
+                }
+                if(key==='home'){
+                  navigate("/app/foryou")
                 }
                 // if (isCompose) { onCompose(); return }
                  onNavChange(key)

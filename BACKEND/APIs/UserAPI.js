@@ -65,11 +65,14 @@ userApp.post('/users/login',async(req,res)=>{
         {
         _id:user.id,
         email:user.email,
+         followers:user.followers,
+        following:user.following,
         bio:user.bio,
         firstName:user.firstName,
         userName:user.userName,
         profileImageUrl:user.profileImageUrl,
         lastName:user.lastName,
+       
     },process.env.SECRET_KEY,{expiresIn:"7d"})
     //store it as httpOnly token
     res.cookie("token", signedToken, {
@@ -96,12 +99,13 @@ userApp.get('/users/logout',async(req,res)=>{
 //update user-profile
 userApp.put('/users/update-profile',verifyToken,async(req,res)=>{
     //get body from the req
-    const {firstName,userName,bio}=req.body || {}
+    const {firstName,lastName,userName,bio}=req.body || {}
     const userId=req.user?._id
     // console.log(userId)
     const updates={}
     //check the fields that have been passed
     if(firstName!==undefined) updates.firstName=firstName;
+    if(lastName!==undefined) updates.lastName=lastName;
     if(userName!==undefined) updates.userName=userName;
     if(bio!==undefined) updates.bio=bio;
     //if updates objects is empty
@@ -148,13 +152,14 @@ userApp.put("/users/password",verifyToken,async(req,res)=>{
 })
 
 //reading all the posts
-userApp.get('/posts/fyp',async(req,res)=>{
+userApp.get('/posts/fyp',verifyToken,async(req,res)=>{
     //read posts
     const allPosts=await PostModel.find({isPostActive:"true"}).lean()
     await Promise.all(
     allPosts.map(async (post)=>{
 const user =await UserModel.findById(post.author)
 post["author_name"]=user.firstName+user.lastName
+post["profileImage"]=user.profileImageUrl
     })
 )
     //send res
@@ -165,15 +170,23 @@ post["author_name"]=user.firstName+user.lastName
 userApp.get('/posts/following', verifyToken, async (req, res) => {
   try {
     const userId=req.user?._id;
-    const user=await UserModel.findById({ _id: userId });
+    console.log(userId)
+    const user=await UserModel.findById(  userId );
     if (!user) {
       return res.status(404).json({ message:"No user found"});
     }
     const followingUsers = user.following
-    console.log(followingUsers)
     const allPosts=await PostModel.find({
       author: { $in:followingUsers }
-    });
+    }).lean();
+
+  await Promise.all(
+    allPosts.map(async (post)=>{
+const postUser =await UserModel.findById(post.author)
+post["profileImage"]=postUser.profileImageUrl
+post["author_name"]=postUser.firstName+postUser.lastName
+    })
+)
 
     res.status(200).json({
       message:"Posts fetched successfully",
@@ -272,9 +285,10 @@ userApp.get("/users/saved", verifyToken,async (req,res)=>{
 })
 
 //Page refresh
-userApp.get("/check-auth", verifyToken, (req,res)=>{
+userApp.get("/check-auth", verifyToken, async(req,res)=>{
+    const user=await UserModel.findById(req.user?._id)
     res.status(200).json({
         message:"authenticated",
-        payload:req.user
+        payload:user
     })
 })

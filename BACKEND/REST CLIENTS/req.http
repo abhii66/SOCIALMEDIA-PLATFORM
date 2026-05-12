@@ -15,8 +15,8 @@ POST http://localhost:2167/user-api/users/login
 Content-Type: application/json
 
 {
-    "idCreds":"lexus_la123",
-    "password":"lexusla12345"
+    "idCreds":"ramjieeagamannolla@gmail.com",
+    "password":"123456"
 }
 
 ###user logout
@@ -49,6 +49,14 @@ GET http://localhost:2167/user-api/users/search?query=nexu
 GET http://localhost:2167/user-api/users/liked-posts
 ###raeding all posts 
 GET http://localhost:2167/user-api/posts/fyp
-/posts/following
 ### reading following posts
 GET http://localhost:2167/user-api/posts/following
+###foloow/unfollow the user
+PUT http://localhost:2167/user-api/users/following
+Content-Type: application/json
+
+{
+    "email":"24eg105j07@anurag.edu.in"
+}
+### check-author
+GET http://localhost:2167/user-api/check-auth

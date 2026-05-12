@@ -66,7 +66,7 @@ const NAV_TABS = ["ForYou", "Following"]
 const MENU_ITEMS = [
   { label: "Saved",       Icon: BookmarkIcon, color: "#333"    },
   { label: "Liked posts", Icon: HeartIcon,    color: "#333"    },
-  { label: "Settings",    Icon: SettingsIcon, color: "#333"    },
+  // { label: "Settings",    Icon: SettingsIcon, color: "#333"    },
   { label: "Log out",     Icon: LogoutIcon,   color: "#e05454" },
 ]
 
@@ -240,10 +240,9 @@ function Header({
                 <div
                   key={label}
                      onClick={() => {
-      if (label === "Saved")       navigate("/savedposts")
-      if (label === "Liked posts") navigate("/likedposts")
-      if (label === "Settings")    navigate("/settings")
-      if (label === "Log out")     navigate("/login")
+      if (label === "Saved")       navigate("/app/savedposts")
+      if (label === "Liked posts") navigate("/app/likedposts")
+      if (label === "Log out")     navigate("/")
       onMenuOpen()   // ← closes the drawer after clicking
     }}
                   style={{
