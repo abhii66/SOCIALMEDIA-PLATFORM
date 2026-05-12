@@ -40,13 +40,22 @@ Content-Type: application/json
 }
 
 ###getting posts
-GET http://localhost:2167/user-api/posts
+GET http://localhost:2167/user-api/posts/fyp
 
 ###Search users
 GET http://localhost:2167/user-api/users/search?query=nexu
 
+###Follow users
+PUT http://localhost:2167/user-api/users/following
+Content-Type: application/json
+
+{
+    "email":"nexushamilton123@gmail.com"
+}
+
 ###Reading liked posts
 GET http://localhost:2167/user-api/users/liked-posts
+<<<<<<< HEAD:BACKEND/REST-CLIENTS/req.http
 ###raeding all posts 
 GET http://localhost:2167/user-api/posts/fyp
 ### reading following posts
@@ -60,3 +69,23 @@ Content-Type: application/json
 }
 ### check-author
 GET http://localhost:2167/user-api/check-auth
+=======
+
+###Reading others followers
+GET http://localhost:2167/user-api/users/followers/69facab3e013f3e84b6e7364
+
+###Reading others following users
+GET http://localhost:2167/user-api/users/following/69facab3e013f3e84b6e7364
+
+###Reading own followers
+GET http://localhost:2167/user-api/users/followers
+
+###Reading own following users
+GET http://localhost:2167/user-api/users/following
+
+###Profile View
+GET http://localhost:2167/user-api/users/profile/69facab3e013f3e84b6e7364
+
+###Self-Profile View
+GET http://localhost:2167/user-api/users/profile
+>>>>>>> b8619b2c38de774f9e0a0a389658c39af2e167be:BACKEND/REST CLIENTS/req.http

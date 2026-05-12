@@ -65,14 +65,13 @@ userApp.post('/users/login',async(req,res)=>{
         {
         _id:user.id,
         email:user.email,
-         followers:user.followers,
+        followers:user.followers,
         following:user.following,
         bio:user.bio,
         firstName:user.firstName,
         userName:user.userName,
         profileImageUrl:user.profileImageUrl,
         lastName:user.lastName,
-       
     },process.env.SECRET_KEY,{expiresIn:"7d"})
     //store it as httpOnly token
     res.cookie("token", signedToken, {
@@ -153,17 +152,30 @@ userApp.put("/users/password",verifyToken,async(req,res)=>{
 
 //reading all the posts
 userApp.get('/posts/fyp',verifyToken,async(req,res)=>{
+    //get user id from body
+    const userId=req.user?._id
+    //get user by id
+    const user=await UserModel.findById(userId)
+    let query={isPostActive:true}
+    //get preferences if user has any
+    if(user?.preferredCategories?.length>0){
+        query.category={$in:user.preferredCategories}
+    }
     //read posts
-    const allPosts=await PostModel.find({isPostActive:"true"}).lean()
-    await Promise.all(
-    allPosts.map(async (post)=>{
-const user =await UserModel.findById(post.author)
-post["author_name"]=user.firstName+user.lastName
-post["profileImage"]=user.profileImageUrl
-    })
-)
+    const allPosts=await PostModel.find(query).populate("author", "firstName lastName userName profileImageUrl").sort({createdAt:-1})
     //send res
     res.status(200).json({message:"Posts: ",payload:allPosts})
+})
+
+//change preferred content
+userApp.put('/users/preferences',verifyToken,async(req,res)=>{
+    const {preferredCategories}=req.body
+    const userId=req.user?._id
+    await UserModel.findByIdAndUpdate(userId,
+        {$set:{preferredCategories}},
+        {new:true}
+    )
+    res.status(200).json({message:"Preferences updated."})
 })
 
 //reading following posts
@@ -171,22 +183,14 @@ userApp.get('/posts/following', verifyToken, async (req, res) => {
   try {
     const userId=req.user?._id;
     console.log(userId)
-    const user=await UserModel.findById(  userId );
+    const user=await UserModel.findById(userId);
     if (!user) {
       return res.status(404).json({ message:"No user found"});
     }
     const followingUsers = user.following
     const allPosts=await PostModel.find({
       author: { $in:followingUsers }
-    }).lean();
-
-  await Promise.all(
-    allPosts.map(async (post)=>{
-const postUser =await UserModel.findById(post.author)
-post["profileImage"]=postUser.profileImageUrl
-post["author_name"]=postUser.firstName+postUser.lastName
-    })
-)
+    }).populate("author","firstName lastName userName profileImageUrl").sort({createdAt:-1})
 
     res.status(200).json({
       message:"Posts fetched successfully",
@@ -206,22 +210,114 @@ userApp.put("/users/following", verifyToken, async (req,res)=>{
     const {email}=req.body
     const bodyy=req.user?._id
     const currentUser=await UserModel.findById(bodyy)
-      const searchUser=await UserModel.findOne({email:email})
+    const searchUser=await UserModel.findOne({email:email})
     if(currentUser.following.includes(searchUser._id)){
-await UserModel.findByIdAndUpdate(bodyy,{$pull:{following:searchUser._id}})
-await UserModel.findByIdAndUpdate(searchUser._id,{$pull:{followers:bodyy}})
-res.status(200).json({message:"unfollowed the user successfully"})
+        await UserModel.findByIdAndUpdate(bodyy,{$pull:{following:searchUser._id}})
+        await UserModel.findByIdAndUpdate(searchUser._id,{$pull:{followers:bodyy}})
+        res.status(200).json({message:"unfollowed the user successfully"})
     }
-else{
-    if(searchUser && searchUser._id==bodyy){
-     return   res.status(400).json({message:"Cannot follow your account."})
+    else{
+        if(searchUser && searchUser._id==bodyy){
+            return res.status(400).json({message:"Cannot follow your account."})
+        }
+        await UserModel.updateOne({_id:bodyy},
+            {$addToSet:{following:searchUser._id}})
+        await UserModel.updateOne({_id:searchUser._id},
+            {$addToSet:{followers:bodyy}})
+        res.status(200).json({ message: "Following..." });
     }
-    await UserModel.updateOne({_id:bodyy},
-        {$addToSet:{following:searchUser._id}})
-    await UserModel.updateOne({_id:searchUser._id},
-        {$addToSet:{followers:bodyy}})
-    res.status(200).json({ message: "Following..." });
-}
+})
+
+//to view user's followers
+userApp.get('/users/followers/:id',verifyToken,async(req,res)=>{
+    //get userId from endpoint
+    const userId=req.params.id
+    // console.log(userId)
+    //get user
+    const user=await UserModel.findById(userId).populate("followers")
+    //if user not found/not active
+    if(!user || user.isUserActive===false){
+        return res.status(404).json({message:"User Not Found"})
+    }
+    //res
+    res.status(200).json({message:"Follwers: ",payload:user.followers})
+})
+
+//to view following users
+userApp.get('/users/following/:id',verifyToken,async(req,res)=>{
+    //get userId from endpoint
+    const userId=req.params.id
+    // console.log(userId)
+    //get user
+    const user=await UserModel.findById(userId).populate("following")
+    //if user not found/not active
+    if(!user || user.isUserActive===false){
+        return res.status(404).json({message:"User Not Found"})
+    }
+    //res
+    res.status(200).json({message:"Following: ",payload:user.following})
+})
+
+//to view own followers
+userApp.get('/users/followers',verifyToken,async(req,res)=>{
+    //get userId from token
+    const userId=req.user?._id
+    // console.log(userId)
+    //get user
+    const user=await UserModel.findById(userId).populate("followers")
+    //if user not found
+    if(!user){
+        return res.status(404).json({message:"User Not Found"})
+    }
+    //res
+    res.status(200).json({message:"Followers: ",payload:user.followers})
+})
+
+//to view own following
+userApp.get('/users/following',verifyToken,async(req,res)=>{
+    //get userId from token
+    const userId=req.user?._id
+    // console.log(userId)
+    //get user
+    const user=await UserModel.findById(userId).populate("following")
+    //if user not found
+    if(!user){
+        return res.status(404).json({message:"User Not Found"})
+    }
+    //res
+    res.status(200).json({message:"Following: ",payload:user.following})
+})
+
+//to view profiles
+userApp.get('/users/profile/:id',verifyToken,async(req,res)=>{
+    //get userId from endpoint
+    const userId=req.params.id
+    //get user by id
+    const user=await UserModel.findById(userId)
+    //if not found
+    if(!user){
+        return res.status(404).json({message:"User Not Found."})
+    }
+    // fetch their posts too
+    const posts=await PostModel.find({author:userId}).sort({createdAt:-1})
+    //res
+    res.status(200).json({message:"Profile: ",payload:user,posts})
+})
+
+//to view own profile
+userApp.get('/users/profile',verifyToken,async(req,res)=>{
+    //get userId from token
+    const userId=req.user?._id
+    //get user by id
+    const user=await UserModel.findById(userId)
+    //if not found
+    if(!user){
+        return res.status(404).json({message:"User Not Found."})
+    }
+    // fetch posts
+    const posts=await PostModel.find({author:userId}).sort({createdAt:-1})
+    //res
+    res.status(200).json({message:"Profile: ",payload:user,posts})
 })
 
 //to view liked posts
@@ -264,16 +360,17 @@ userApp.put('/users/saved/:id',verifyToken,async (req,res)=>{
     const userObj=await UserModel.findById(userId)
     //find if user already saved the post
     if(userObj.savedPosts.includes(postId)){
- await UserModel.updateOne({_id:userId},
-    {$pull:{savedPosts:postId}})
-    res.status(200).json({message:"post unsaved."})
+        await UserModel.updateOne({_id:userId},
+            {$pull:{savedPosts:postId}})
+        res.status(200).json({message:"post unsaved."})
     }
-else{
-    await UserModel.updateOne({_id:userId},
-    {$addToSet:{savedPosts:postId}})
-    res.status(200).json({message:"post saved."})
+    else{
+        await UserModel.updateOne({_id:userId},
+            {$addToSet:{savedPosts:postId}})
+        res.status(200).json({message:"post saved."})
     }
 })
+
 //get saved posts
 userApp.get("/users/saved", verifyToken,async (req,res)=>{
     //userobj from usermodel
@@ -281,12 +378,11 @@ userApp.get("/users/saved", verifyToken,async (req,res)=>{
    const posts=await UserModel.findById(userId).populate("savedPosts")
    //res
    res.status(200).json({message:"Saved Posts: ",payload:posts.savedPosts})
-
 })
 
 //Page refresh
 userApp.get("/check-auth", verifyToken, async(req,res)=>{
-    const user=await UserModel.findById(req.user?._id)
+    const user=await UserModel.findById(req.user?._id).select("-password")
     res.status(200).json({
         message:"authenticated",
         payload:user
