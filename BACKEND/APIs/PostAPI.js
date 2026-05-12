@@ -39,6 +39,14 @@ postApp.get("/posts",verifyToken,async(req,res)=>{
     return res.status(200).json({message:"Posts: ",payload:postView});
 })
 
+//read posts with id
+postApp.get('/posts/:id',verifyToken,async(req,res)=>{
+    const post=await PostModel.findById(req.params.id)
+        .populate("comments.user","firstName lastName userName profileImageUrl")
+        .populate("author","firstName lastName userName profileImageUrl")
+    res.status(200).json({message:"post",payload:post})
+})
+
 //update post
 postApp.put("/posts",verifyToken,async(req,res)=>{
     //get body
