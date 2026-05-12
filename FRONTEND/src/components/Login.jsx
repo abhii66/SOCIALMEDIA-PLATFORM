@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import { useNavigate } from 'react-router'
+import { useAuth } from '../store/authStore'
 
-// ── Logo ───────────────────────────────────
 const Logo = () => (
   <svg width="36" height="36" viewBox="0 0 192 192" fill="none">
     <path d="M141.537 88.988C140.31 88.388 139.051 87.823 137.763 87.296C135.327 60.525 120.061 45.393 96.27 45.245C96.183 45.244 96.096 45.244 96.009 45.244C81.771 45.244 69.787 51.565 62.099 62.834L75.916 72.47C81.576 64.183 90.461 59.77 96.009 59.77C108.126 59.848 117.245 67.07 120.76 79.015C118.208 78.604 115.564 78.38 112.842 78.38C88.52 78.38 71.972 92.73 71.972 114.147C71.972 136.113 89.085 149.5 112.842 149.5C140.193 149.5 156.372 133.208 156.372 108.007C156.372 99.516 154.264 92.107 141.537 88.988ZM112.842 135.068C98.721 135.068 86.399 128.014 86.399 114.147C86.399 100.835 97.647 92.807 112.842 92.807C127.678 92.807 138.622 99.747 138.622 114.147C138.622 128.546 127.306 135.068 112.842 135.068Z" fill="currentColor"/>
@@ -10,7 +9,6 @@ const Logo = () => (
   </svg>
 )
 
-// ── Eye Icons ──────────────────────────────
 const EyeIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
@@ -25,52 +23,32 @@ const EyeOffIcon = () => (
   </svg>
 )
 
-
-// ── Login Component ────────────────────────
 function Login() {
   const navigate = useNavigate()
-  const [identifier, setIdentifier] = useState("")
-  const [password, setPassword]     = useState("")
-  const [showPass, setShowPass]     = useState(false)
-  const [error, setError]           = useState("")
-  const [idFocused, setIdFocused]   = useState(false)
-  const [pwFocused, setPwFocused]   = useState(false)
-  const [loading, setLoading]       = useState(false)
+  const { login, loading, error } = useAuth()
 
- const handleLogin = async () => {
-  setError("")
-  if (!identifier.trim() || !password.trim()) {
-    setError("Please fill in all fields.")
-    return
+  const [identifier, setIdentifier] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPass, setShowPass] = useState(false)
+  const [idFocused, setIdFocused] = useState(false)
+  const [pwFocused, setPwFocused] = useState(false)
+
+  const handleLogin = async () => {
+    if (!identifier.trim() || !password.trim()) return
+
+    const success = await login({ idCreds: identifier, password })
+    if(success) navigate("/app/foryou")
   }
-  setLoading(true)
-  try {
-    const res = await axios.post(
-      "http://localhost:2167/user-api/users/login",
-      { idCreds: identifier, password },
-      { withCredentials: true }
-    )
-    navigate("/app/foryou")
-  } catch (err) {
-    const msg = err.response?.data?.message || "Incorrect username/email or password."
-    setError(msg)
-  } finally {
-    setLoading(false)
-  }
-}
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleLogin()
   }
 
   return (
     <div style={{
-      minHeight: "100vh",
-      background: "#fff",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-      padding: "20px",
+      minHeight: "100vh", background: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "'DM Sans', 'Segoe UI', sans-serif", padding: "20px",
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -81,28 +59,23 @@ function Login() {
         }
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
-          20%       { transform: translateX(-6px); }
-          40%       { transform: translateX(6px); }
-          60%       { transform: translateX(-4px); }
-          80%       { transform: translateX(4px); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
         }
         .login-card { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
-        .shake      { animation: shake 0.4s ease; }
+        .shake { animation: shake 0.4s ease; }
         ::placeholder { color: #ccc; }
       `}</style>
 
-      <div
-        className="login-card"
-        style={{
-          width: "100%",
-          maxWidth: 400,
-          background: "#fff",
-          border: "1px solid rgba(0,0,0,0.08)",
-          borderRadius: 24,
-          padding: "40px 32px 32px",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
-        }}
-      >
+      <div className="login-card" style={{
+        width: "100%", maxWidth: 400,
+        background: "#fff",
+        border: "1px solid rgba(0,0,0,0.08)",
+        borderRadius: 24, padding: "40px 32px 32px",
+        boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+      }}>
         {/* Logo + Title */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ color: "#000", display: "inline-block", marginBottom: 16 }}>
@@ -111,19 +84,15 @@ function Login() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "#000", margin: "0 0 6px" }}>
             Welcome back
           </h1>
-          <p style={{ fontSize: 14, color: "#aaa", margin: 0 }}>
-            Log in to continue
-          </p>
+          <p style={{ fontSize: 14, color: "#aaa", margin: 0 }}>Log in to continue</p>
         </div>
 
-        {/* Identifier field */}
+        {/* Identifier */}
         <div style={{ marginBottom: 14, animation: "fadeUp 0.5s 0.1s both" }}>
           <div style={{
-            display: "flex", alignItems: "center", gap: 10,
+            display: "flex", alignItems: "center",
             border: idFocused ? "1.5px solid #000" : "1.5px solid rgba(0,0,0,0.1)",
-            borderRadius: 12,
-            padding: "0 14px",
-            height: 50,
+            borderRadius: 12, padding: "0 14px", height: 50,
             transition: "border 0.2s",
             background: idFocused ? "#fff" : "#fafafa",
           }}>
@@ -131,7 +100,7 @@ function Login() {
               type="text"
               placeholder="Username or email"
               value={identifier}
-              onChange={e => { setIdentifier(e.target.value); setError("") }}
+              onChange={e => setIdentifier(e.target.value)}
               onFocus={() => setIdFocused(true)}
               onBlur={() => setIdFocused(false)}
               onKeyDown={handleKeyDown}
@@ -144,14 +113,12 @@ function Login() {
           </div>
         </div>
 
-        {/* Password field */}
+        {/* Password */}
         <div style={{ marginBottom: 20, animation: "fadeUp 0.5s 0.15s both" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
             border: pwFocused ? "1.5px solid #000" : "1.5px solid rgba(0,0,0,0.1)",
-            borderRadius: 12,
-            padding: "0 14px",
-            height: 50,
+            borderRadius: 12, padding: "0 14px", height: 50,
             transition: "border 0.2s",
             background: pwFocused ? "#fff" : "#fafafa",
           }}>
@@ -159,7 +126,7 @@ function Login() {
               type={showPass ? "text" : "password"}
               placeholder="Password"
               value={password}
-              onChange={e => { setPassword(e.target.value); setError("") }}
+              onChange={e => setPassword(e.target.value)}
               onFocus={() => setPwFocused(true)}
               onBlur={() => setPwFocused(false)}
               onKeyDown={handleKeyDown}
@@ -182,23 +149,15 @@ function Login() {
           </div>
         </div>
 
-        {/* Error message */}
+        {/* Error */}
         {error && (
-          <div
-            className="shake"
-            style={{
-              background: "#fff5f5",
-              border: "1px solid #fecaca",
-              borderRadius: 10,
-              padding: "10px 14px",
-              fontSize: 13,
-              color: "#e05454",
-              marginBottom: 16,
-              textAlign: "center",
-            }}
-          >
+          <div className="shake" style={{
+            background: "#fff5f5", border: "1px solid #fecaca",
+            borderRadius: 10, padding: "10px 14px",
+            fontSize: 13, color: "#e05454",
+            marginBottom: 16, textAlign: "center",
+          }}>
             {error}
-            {/* Show sign up option on wrong credentials */}
             {error.includes("Incorrect") && (
               <div style={{ marginTop: 8 }}>
                 <span style={{ color: "#aaa" }}>Don't have an account? </span>
@@ -218,19 +177,13 @@ function Login() {
           onClick={handleLogin}
           disabled={loading}
           style={{
-            width: "100%",
-            height: 50,
-            borderRadius: 12,
-            border: "none",
+            width: "100%", height: 50, borderRadius: 12, border: "none",
             background: loading ? "#ddd" : "#000",
             color: loading ? "#aaa" : "#fff",
-            fontSize: 15,
-            fontWeight: 600,
+            fontSize: 15, fontWeight: 600,
             cursor: loading ? "not-allowed" : "pointer",
-            fontFamily: "inherit",
-            transition: "all 0.2s",
-            marginBottom: 20,
-            animation: "fadeUp 0.5s 0.2s both",
+            fontFamily: "inherit", transition: "all 0.2s",
+            marginBottom: 20, animation: "fadeUp 0.5s 0.2s both",
           }}
           onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "#222" }}
           onMouseLeave={e => { if (!loading) e.currentTarget.style.background = "#000" }}
@@ -241,8 +194,7 @@ function Login() {
         {/* Divider */}
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
-          marginBottom: 20,
-          animation: "fadeUp 0.5s 0.25s both",
+          marginBottom: 20, animation: "fadeUp 0.5s 0.25s both",
         }}>
           <div style={{ flex: 1, height: 1, background: "rgba(0,0,0,0.08)" }} />
           <span style={{ fontSize: 13, color: "#ccc" }}>or</span>
@@ -250,11 +202,7 @@ function Login() {
         </div>
 
         {/* Sign up link */}
-        <p style={{
-          textAlign: "center", fontSize: 14,
-          color: "#aaa", margin: 0,
-          animation: "fadeUp 0.5s 0.3s both",
-        }}>
+        <p style={{ textAlign: "center", fontSize: 14, color: "#aaa", margin: 0, animation: "fadeUp 0.5s 0.3s both" }}>
           Don't have an account?{" "}
           <span
             onClick={() => navigate("/register")}
