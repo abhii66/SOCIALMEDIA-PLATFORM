@@ -26,7 +26,16 @@ import Login from './components/Login.jsx'
 import PostsUpload from './components/PostsUpload.jsx'
 import Profile from './components/Profile.jsx'
 import EditProfile from './components/EditProfile.jsx'
+import EditPost from './components/EditPost.jsx'
+import PostDetail from './components/PostDetail.jsx'
+import { useAuth } from './store/authStore.js'
+import { useEffect } from 'react'
 function App() {
+  const checkAuth = useAuth((state) => state.checkAuth)
+
+  useEffect(() => {
+    checkAuth()
+  }, [])
   const routerObj = createBrowserRouter([
     {
       path: "/",
@@ -47,10 +56,12 @@ function App() {
         { path: "savedposts",       element: <SavedPosts /> },
         { path: "likedposts",       element: <LikedPosts /> },
         { path: "postsupload",      element: <PostsUpload /> },
-        { path: "profile",          element: <Profile /> },
-        { path: "editprofile",      element: <EditProfile /> },
+        { path: "profile/:id",          element: <Profile /> },
+        { path: "editprofile",      element: <EditProfile /> }
       ]
-    }
+    },
+      { path: "/edit-post", element: <EditPost /> },
+      { path: "/post/:id",      element: <PostDetail /> }
   ])
   return (
     <>
