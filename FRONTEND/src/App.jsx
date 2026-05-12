@@ -24,11 +24,11 @@ function App() {
   const routerObj = createBrowserRouter([
     {
       path: "/",
-      element: <Login />         // Login has NO footer — keep it outside
+      element: <Login />
     },
     {
       path: "/register",
-      element: <Register />      // Same for Register
+      element: <Register />
     },
     {
       path: "/app",
@@ -41,10 +41,10 @@ function App() {
         { path: "savedposts",       element: <SavedPosts /> },
         { path: "likedposts",       element: <LikedPosts /> },
         { path: "postsupload",      element: <PostsUpload /> },
-        { path: "profile/:id",          element: <Profile /> },
-        { path: "editprofile",      element: <EditProfile /> }
       ]
     },
+      { path: "/profile/:id",          element: <Profile /> },
+      { path: "/editprofile",      element: <EditProfile /> },
       { path: "/edit-post", element: <EditPost /> },
       { path: "/post/:id",      element: <PostDetail /> }
   ])
