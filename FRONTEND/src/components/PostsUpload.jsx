@@ -1,6 +1,13 @@
+
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import axios from 'axios'
+import { useAuth } from '../store/authStore'
+
+const BASE_URL = "http://localhost:2167"
+
+const CATEGORIES = ["Music", "Art", "Food", "Travel", "Fitness", "Gaming", "Thoughts", "Other"]
+
 // ── Icons ──────────────────────────────────
 const XIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -17,36 +24,38 @@ const ImageIcon = () => (
   </svg>
 )
 
-const GifIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-    <rect x="2" y="6" width="20" height="12" rx="3" stroke="currentColor" strokeWidth="1.8" />
-    <text x="5" y="16" fontSize="8" fontWeight="700" fill="currentColor" fontFamily="sans-serif">GIF</text>
-  </svg>
-)
+// const GifIcon = () => (
+//   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+//     <rect x="2" y="6" width="20" height="12" rx="3" stroke="currentColor" strokeWidth="1.8" />
+//     <text x="5" y="16" fontSize="8" fontWeight="700" fill="currentColor" fontFamily="sans-serif">GIF</text>
+//   </svg>
+// )
 
-const PollIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-    <rect x="3" y="12" width="4" height="9" rx="1" stroke="currentColor" strokeWidth="1.8" />
-    <rect x="10" y="7" width="4" height="14" rx="1" stroke="currentColor" strokeWidth="1.8" />
-    <rect x="17" y="3" width="4" height="18" rx="1" stroke="currentColor" strokeWidth="1.8" />
-  </svg>
-)
+// const PollIcon = () => (
+//   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+//     <rect x="3" y="12" width="4" height="9" rx="1" stroke="currentColor" strokeWidth="1.8" />
+//     <rect x="10" y="7" width="4" height="14" rx="1" stroke="currentColor" strokeWidth="1.8" />
+//     <rect x="17" y="3" width="4" height="18" rx="1" stroke="currentColor" strokeWidth="1.8" />
+//   </svg>
+// )
 
-const LocationIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-    <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.8" />
-  </svg>
-)
+// const LocationIcon = () => (
+//   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+//     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+//     <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+//   </svg>
+// )
 
 // ── PostsUpload Component ──────────────────
 function PostsUpload() {
-  const navigate   = useNavigate()
-  const fileRef    = useRef(null)
+  const navigate = useNavigate()
+  const fileRef  = useRef(null)
+  const { currentUser } = useAuth()
 
-  const [text, setText]       = useState("")
-  const [images, setImages]   = useState([])   // { url, file }
-  const [loading, setLoading] = useState(false)
+  const [text, setText]         = useState("")
+  const [images, setImages]     = useState([])   // { url, file }
+  const [category, setCategory] = useState("Other")
+  const [loading, setLoading]   = useState(false)
 //   const [audience, setAudience] = useState("Anyone")
 
   const MAX_CHARS = 500
@@ -63,7 +72,8 @@ function PostsUpload() {
   const removeImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index))
   }
-const handlePost = async () => {
+
+  const handlePost = async () => {
     if (!text.trim() && images.length === 0) return
 
     setLoading(true)
@@ -71,13 +81,15 @@ const handlePost = async () => {
     try {
       const formData = new FormData()
       formData.append("content", text)
+      formData.append("author", currentUser._id)
+      formData.append("category", category)
       if (images.length > 0) {
-    formData.append("imageUrl", images[0].file) // only first image
-}
+        formData.append("imageUrl", images[0].file) // only first image
+      }
       // images.forEach(img => formData.append("imageUrl", img.file))  // ← send actual files
 
       const post = await axios.post(
-        "http://localhost:2167/post-api/posts",
+        `${BASE_URL}/post-api/posts`,
         formData,
         { withCredentials: true }
       )
@@ -135,7 +147,7 @@ const handlePost = async () => {
         >
           Cancel
         </button>
-        <span style={{ fontSize: 16, fontWeight: 700, color: "#000" }}>New thread</span>
+        <span style={{ fontSize: 16, fontWeight: 700, color: "#000" }}>New post</span>
         <div style={{ width: 60 }} />
       </div>
 
@@ -145,14 +157,22 @@ const handlePost = async () => {
 
           {/* Avatar */}
           <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: "50%",
-              background: "linear-gradient(135deg,#7c3aed,#ec4899)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 700, fontSize: 16, color: "#fff",
-            }}>
-              Y
-            </div>
+            {currentUser?.profileImageUrl ? (
+              <img
+                src={currentUser.profileImageUrl}
+                alt=""
+                style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover" }}
+              />
+            ) : (
+              <div style={{
+                width: 44, height: 44, borderRadius: "50%",
+                background: "#f0f0f0",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 700, fontSize: 16, color: "#555",
+              }}>
+                {currentUser?.firstName?.charAt(0).toUpperCase()}
+              </div>
+            )}
             {/* Thread line */}
             <div style={{ width: 2, flex: 1, minHeight: 20, background: "rgba(0,0,0,0.08)", marginTop: 8, borderRadius: 2 }} />
           </div>
@@ -160,7 +180,10 @@ const handlePost = async () => {
           {/* Content */}
           <div style={{ flex: 1 }}>
             {/* Username */}
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#000", marginBottom: 4 }}>you</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#000", marginBottom: 4 }}>
+              {currentUser?.userName || currentUser?.firstName}
+            </div>
+
 {/* 
             Audience selector
             <button
@@ -188,6 +211,28 @@ const handlePost = async () => {
                 lineHeight: 1.5,
               }}
             />
+
+            {/* Category selector */}
+            <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: 20,
+                    border: category === cat ? "1.5px solid #000" : "1.5px solid rgba(0,0,0,0.1)",
+                    background: category === cat ? "#000" : "transparent",
+                    color: category === cat ? "#fff" : "#888",
+                    fontSize: 12, fontWeight: 500,
+                    cursor: "pointer", fontFamily: "inherit",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
 
             {/* Image previews */}
             {images.length > 0 && (
@@ -227,7 +272,6 @@ const handlePost = async () => {
 
             {/* Action icons */}
             <div style={{ display: "flex", gap: 16, marginTop: 14 }}>
-              {/* Image upload */}
               <input
                 ref={fileRef}
                 type="file"
@@ -237,7 +281,7 @@ const handlePost = async () => {
                 style={{ display: "none" }}
               />
               {[
-                { Icon: ImageIcon,   action: () => fileRef.current?.click(), label: "Image" },
+                { Icon: ImageIcon, action: () => fileRef.current?.click(), label: "Image" },
                 // { Icon: GifIcon,     action: () => {},                       label: "GIF"   },
                 // { Icon: PollIcon,    action: () => {},                       label: "Poll"  },
                 // { Icon: LocationIcon,action: () => {},                       label: "Location" },

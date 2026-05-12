@@ -1,7 +1,9 @@
 
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
+import { useAuth } from '../store/authStore' 
 import axios from 'axios'
+
 
 // ── Logo ───────────────────────────────────
 const Logo = () => (
@@ -213,7 +215,7 @@ function InputField({ placeholder, value, onChange, type = "text", rightElement,
 // ── Register Component ─────────────────────
 function Register() {
   const navigate = useNavigate()
-
+  const { register } = useAuth()
   const [form, setForm] = useState({
     firstName: "",
     lastName:  "",
@@ -270,10 +272,13 @@ function Register() {
         formData.append("profileImageUrl", profileImage.file)
       }
 
-      await axios.post("http://localhost:2167/user-api/users", formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      const success = await register(formData)
+      if(success){
+      setSuccess(true)
+      setTimeout(() => navigate("/"), 1500)
+      } else {
+      setErrors({ api: "Registration failed. Please try again." })
+      }
 
       setSuccess(true)
       setTimeout(() => navigate("/"), 1500)
