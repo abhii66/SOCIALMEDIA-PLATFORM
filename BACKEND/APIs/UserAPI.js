@@ -7,6 +7,7 @@ import { verifyToken } from '../middleware/verifyToken.js'
 import { config } from 'dotenv'
 import {upload} from '../config/multer.js'
 import {uploadToCloudinary} from '../config/cloudinaryUpload.js'
+// import {upload} from '../middleware/uploadImages.js'
 const {sign}=jwt
 export const userApp=exp.Router()
 
@@ -14,13 +15,15 @@ export const userApp=exp.Router()
 userApp.post("/users",upload.single("profileImageUrl"),async(req,res)=>{
     //get user from body
     const newUser=req.body
-    //upload image to cloudinary from memoryStorage
+    // upload image to cloudinary from memoryStorage
     // upload image to cloudinary if file exists
     if(req.file){
         const cloudinaryResult = await uploadToCloudinary(req.file.buffer)
         newUser.profileImageUrl = cloudinaryResult.secure_url
     }
-
+// if(!req.file)
+//   return  res.json({message:"plz upload the file"})
+// newUser.profileImageUrl = req.file.path
     //hash the password
     const hashedPassword=await hash(newUser.password,12)
     //replace plain password with hashed password
@@ -62,6 +65,8 @@ userApp.post('/users/login',async(req,res)=>{
         {
         _id:user.id,
         email:user.email,
+        followers:user.followers,
+        following:user.following,
         bio:user.bio,
         firstName:user.firstName,
         userName:user.userName,
@@ -93,12 +98,13 @@ userApp.get('/users/logout',async(req,res)=>{
 //update user-profile
 userApp.put('/users/update-profile',verifyToken,async(req,res)=>{
     //get body from the req
-    const {firstName,userName,bio}=req.body || {}
+    const {firstName,lastName,userName,bio}=req.body || {}
     const userId=req.user?._id
     // console.log(userId)
     const updates={}
     //check the fields that have been passed
     if(firstName!==undefined) updates.firstName=firstName;
+    if(lastName!==undefined) updates.lastName=lastName;
     if(userName!==undefined) updates.userName=userName;
     if(bio!==undefined) updates.bio=bio;
     //if updates objects is empty
@@ -145,7 +151,7 @@ userApp.put("/users/password",verifyToken,async(req,res)=>{
 })
 
 //reading all the posts
-userApp.get('/posts/fyp',async(req,res)=>{
+userApp.get('/posts/fyp',verifyToken,async(req,res)=>{
     //get user id from body
     const userId=req.user?._id
     //get user by id
@@ -176,12 +182,12 @@ userApp.put('/users/preferences',verifyToken,async(req,res)=>{
 userApp.get('/posts/following', verifyToken, async (req, res) => {
   try {
     const userId=req.user?._id;
-    const user=await UserModel.findById({ _id: userId });
+    console.log(userId)
+    const user=await UserModel.findById(userId);
     if (!user) {
       return res.status(404).json({ message:"No user found"});
     }
     const followingUsers = user.following
-    console.log(followingUsers)
     const allPosts=await PostModel.find({
       author: { $in:followingUsers }
     }).populate("author","firstName lastName userName profileImageUrl").sort({createdAt:-1})
@@ -204,22 +210,22 @@ userApp.put("/users/following", verifyToken, async (req,res)=>{
     const {email}=req.body
     const bodyy=req.user?._id
     const currentUser=await UserModel.findById(bodyy)
-      const searchUser=await UserModel.findOne({email:email})
+    const searchUser=await UserModel.findOne({email:email})
     if(currentUser.following.includes(searchUser._id)){
-await UserModel.findByIdAndUpdate(bodyy,{$pull:{following:searchUser._id}})
-await UserModel.findByIdAndUpdate(searchUser._id,{$pull:{followers:bodyy}})
-res.status(200).json({message:"unfollowed the user successfully"})
+        await UserModel.findByIdAndUpdate(bodyy,{$pull:{following:searchUser._id}})
+        await UserModel.findByIdAndUpdate(searchUser._id,{$pull:{followers:bodyy}})
+        res.status(200).json({message:"unfollowed the user successfully"})
     }
-else{
-    if(searchUser && searchUser._id==bodyy){
-     return   res.status(400).json({message:"Cannot follow your account."})
+    else{
+        if(searchUser && searchUser._id==bodyy){
+            return res.status(400).json({message:"Cannot follow your account."})
+        }
+        await UserModel.updateOne({_id:bodyy},
+            {$addToSet:{following:searchUser._id}})
+        await UserModel.updateOne({_id:searchUser._id},
+            {$addToSet:{followers:bodyy}})
+        res.status(200).json({ message: "Following..." });
     }
-    await UserModel.updateOne({_id:bodyy},
-        {$addToSet:{following:searchUser._id}})
-    await UserModel.updateOne({_id:searchUser._id},
-        {$addToSet:{followers:bodyy}})
-    res.status(200).json({ message: "Following..." });
-}
 })
 
 //to view user's followers
@@ -282,7 +288,6 @@ userApp.get('/users/following',verifyToken,async(req,res)=>{
     res.status(200).json({message:"Following: ",payload:user.following})
 })
 
-
 //to view profiles
 userApp.get('/users/profile/:id',verifyToken,async(req,res)=>{
     //get userId from endpoint
@@ -314,7 +319,6 @@ userApp.get('/users/profile',verifyToken,async(req,res)=>{
     //res
     res.status(200).json({message:"Profile: ",payload:user,posts})
 })
-
 
 //to view liked posts
 userApp.get('/users/liked-posts', verifyToken, async(req,res)=>{
@@ -356,16 +360,17 @@ userApp.put('/users/saved/:id',verifyToken,async (req,res)=>{
     const userObj=await UserModel.findById(userId)
     //find if user already saved the post
     if(userObj.savedPosts.includes(postId)){
- await UserModel.updateOne({_id:userId},
-    {$pull:{savedPosts:postId}})
-    res.status(200).json({message:"post unsaved."})
+        await UserModel.updateOne({_id:userId},
+            {$pull:{savedPosts:postId}})
+        res.status(200).json({message:"post unsaved."})
     }
-else{
-    await UserModel.updateOne({_id:userId},
-    {$addToSet:{savedPosts:postId}})
-    res.status(200).json({message:"post saved."})
+    else{
+        await UserModel.updateOne({_id:userId},
+            {$addToSet:{savedPosts:postId}})
+        res.status(200).json({message:"post saved."})
     }
 })
+
 //get saved posts
 userApp.get("/users/saved", verifyToken,async (req,res)=>{
     //userobj from usermodel
@@ -373,14 +378,13 @@ userApp.get("/users/saved", verifyToken,async (req,res)=>{
    const posts=await UserModel.findById(userId).populate("savedPosts")
    //res
    res.status(200).json({message:"Saved Posts: ",payload:posts.savedPosts})
-
 })
 
 //Page refresh
-userApp.get("/check-auth",verifyToken,async(req,res)=>{
-    const user=await UserModel.findById(req.user._id).select("-password")
+userApp.get("/check-auth", verifyToken, async(req,res)=>{
+    const user=await UserModel.findById(req.user?._id).select("-password")
     res.status(200).json({
         message:"authenticated",
-        payload: user
+        payload:user
     })
 })

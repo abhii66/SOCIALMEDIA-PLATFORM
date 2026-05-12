@@ -2,30 +2,31 @@ import exp from 'express'
 import { verifyToken } from '../middleware/verifyToken.js'
 import { PostModel } from '../models/PostModel.js'
 import { UserModel } from '../models/UserModel.js'
-import {upload} from '../config/multer.js'
+import { upload } from '../config/multer.js'
 import { uploadToCloudinary } from '../config/cloudinaryUpload.js'
+// import {upload} from '../middleware/uploadImages.js'
 export const postApp=exp.Router()
 
 //new post
-postApp.post("/posts",verifyToken,upload.single("imageUrl"),async(req,res)=>{
+postApp.post("/posts",upload.single("imageUrl"),verifyToken,async(req,res)=>{
     //get body from the req
-    const {content, category}=req.body
-    //get author id token
-    const authorId = req.user?._id;
+    const postInfo=req.body
+    postInfo.author=req.user?._id
     // console.log(postInfo)
-    let user=await UserModel.findById(authorId);
+    let user=await UserModel.findById(postInfo.author);
     //if user not found
     if(!user){
         return res.status(404).json({message:"User Not Found."})
     }
-    //save the pic to cloudinary(if picture is uploaded)
-    let imageUrl = null
-    if (req.file) {
-        const result = await uploadToCloudinary(req.file.buffer)
-        imageUrl = result.secure_url
+    // if(!req.file){
+    //     return res.json({message:"plz upload posts"})
+    // }
+    // postInfo.imageUrl = req.file.path
+    if(req.file){
+        const cloudinaryResult = await uploadToCloudinary(req.file.buffer)
+        postInfo.imageUrl = cloudinaryResult.secure_url
     }
-    //save
-    let newDoc=new PostModel({content,category,author:authorId,imageUrl})
+    let newDoc=new PostModel(postInfo)
     await newDoc.save();
     return res.status(201).json({message:"Post Added."})
 })
@@ -111,8 +112,7 @@ postApp.patch("/posts/:id/like",verifyToken,async(req,res)=>{
     }
     //res
     res.status(200).json({message: alreadyLiked ? "Unliked" : "Liked"})
-}
-)
+})
 
 //Add a comment 
 postApp.put("/posts/comments",verifyToken,async(req,res)=>{
@@ -132,14 +132,6 @@ postApp.put("/posts/comments",verifyToken,async(req,res)=>{
     await post.save()
     //send res
     res.status(201).json({message:"Comment added successfully.",payload:post})
-})
-
-//to get info of the commented user
-postApp.get('/posts/:id', verifyToken, async(req,res)=>{
-    const post = await PostModel.findById(req.params.id)
-        .populate("comments.user", "firstName userName email")
-        .populate("author", "firstName userName")
-    res.status(200).json({message:"user", payload:post})
 })
 
 //to delete comment

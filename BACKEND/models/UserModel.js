@@ -24,7 +24,9 @@ const userSchema=new Schema({
         required:[true,"Password is required"]
     },
     profileImageUrl:{
-        type:String
+        type:String,
+         default: ""
+
     },
     bio: {
         type: String,
@@ -55,6 +57,7 @@ const userSchema=new Schema({
     enum: ["Music","Art","Food","Travel","Fitness","Gaming","Thoughts","Other"]
     }]
 },
+
 {
     versionKey:false,
     timestamps:true,
