@@ -24,15 +24,15 @@ function App() {
   const routerObj = createBrowserRouter([
     {
       path: "/",
-      element: <Login />         // Login has NO footer — keep it outside
+      element: <Login />
     },
     {
       path: "/register",
-      element: <Register />      // Same for Register
+      element: <Register />
     },
     {
       path: "/app",
-      element: <RootLayout />,   // Footer lives here, Outlet renders children
+      element: <RootLayout />,
       children: [
         { index: true,              element: <Navigate to="foryou" replace /> },
         { path: "foryou",           element: <ForYouPosts /> },
