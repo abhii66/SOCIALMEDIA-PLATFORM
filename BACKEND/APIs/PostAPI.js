@@ -4,7 +4,6 @@ import { PostModel } from '../models/PostModel.js'
 import { UserModel } from '../models/UserModel.js'
 import { upload } from '../config/multer.js'
 import { uploadToCloudinary } from '../config/cloudinaryUpload.js'
-// import {upload} from '../middleware/uploadImages.js'
 export const postApp=exp.Router()
 
 //new post
@@ -130,8 +129,11 @@ postApp.put("/posts/comments",verifyToken,async(req,res)=>{
     post.comments.push({ user: userId, comment: comment })
     //save
     await post.save()
+    //get user info
+    const updatedPost = await PostModel.findById(postId)
+    .populate("comments.user", "userName firstName lastName profileImageUrl")
     //send res
-    res.status(201).json({message:"Comment added successfully.",payload:post})
+    res.status(201).json({message:"Comment added successfully.",payload:updatedPost})
 })
 
 //to delete comment

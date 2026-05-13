@@ -100,7 +100,7 @@ function CommentCard({ comment }) {
 
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-          <span onClick={() => navigate(`/profile/${post.author?._id}`)}
+          <span onClick={() => navigate(`/app/profile/${comment.user?._id}`)}
             style={{ cursor: "pointer" }} 
             style={{ fontSize: 14, fontWeight: 600, color: "#000" }}>
             {comment.user?.firstName} {comment.user?.lastName}
@@ -173,7 +173,10 @@ useEffect(() => {
         { postId: id, comment },
         { withCredentials: true }
       )
-      setPost(res.data.payload)
+    setPost(prev => ({
+      ...prev,
+      comments: res.data.payload.comments,
+    }))
       setComment("")
     } catch(err) {
       console.log(err)
@@ -257,7 +260,7 @@ useEffect(() => {
                 {post.author?.firstName?.charAt(0).toUpperCase()}
               </div>
             )}
-            <div onClick={() => navigate(`/profile/${post.author?._id}`)} style={{ cursor: "pointer" }}>
+            <div onClick={() => navigate(`/app/profile/${post.author?._id}`)} style={{ cursor: "pointer" }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: "#000" }}>
                 {post.author?.firstName} {post.author?.lastName}
               </div>

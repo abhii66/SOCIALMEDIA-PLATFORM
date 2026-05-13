@@ -71,7 +71,7 @@ export const useAuth = create((set)=>({
     //check auth on page refresh
     checkAuth:async () => {
         try {
-            set({ loading: true });
+            set({ authloading: true });
             const res = await axios.get(`${BASE_URL}/user-api/check-auth`, { withCredentials: true });
             set({
                 currentUser: res.data.payload,
