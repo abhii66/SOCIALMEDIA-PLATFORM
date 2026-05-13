@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import Footer from "./Footer";
 import { useNavigate } from "react-router";
 
 const GridIcon = () => (
@@ -149,7 +150,7 @@ export default function Profile() {
         }}
           onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
           onMouseLeave={e => e.currentTarget.style.background = "#fff"}
-          onClick={()=>navigate('/app/editprofile')}
+          onClick={()=>navigate('/editprofile')}
         >
           Edit profile
         </button>
@@ -220,6 +221,7 @@ export default function Profile() {
           <p style={{ fontSize: 13, color: "#999", margin: 0 }}>Replies you make will appear here.</p>
         </div>
       )}
+      <Footer />
     </div>
   );
 }

@@ -7,7 +7,6 @@ import { verifyToken } from '../middleware/verifyToken.js'
 import { config } from 'dotenv'
 import {upload} from '../config/multer.js'
 import {uploadToCloudinary} from '../config/cloudinaryUpload.js'
-// import {upload} from '../middleware/uploadImages.js'
 const {sign}=jwt
 export const userApp=exp.Router()
 
@@ -96,7 +95,7 @@ userApp.get('/users/logout',async(req,res)=>{
 })
 
 //update user-profile
-userApp.put('/users/update-profile',verifyToken,async(req,res)=>{
+userApp.put('/users/update-profile',upload.single("profileImageUrl"),verifyToken,async(req,res)=>{
     //get body from the req
     const {firstName,lastName,userName,bio}=req.body || {}
     const userId=req.user?._id
@@ -107,6 +106,10 @@ userApp.put('/users/update-profile',verifyToken,async(req,res)=>{
     if(lastName!==undefined) updates.lastName=lastName;
     if(userName!==undefined) updates.userName=userName;
     if(bio!==undefined) updates.bio=bio;
+    if(req.file){
+        const cloudinaryResult = await uploadToCloudinary(req.file.buffer)
+        updates.profileImageUrl = cloudinaryResult.secure_url
+    }
     //if updates objects is empty
     if(Object.keys(updates).length===0){
         return res.status(400).json({message:"No updates done."})

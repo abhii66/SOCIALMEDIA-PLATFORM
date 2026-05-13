@@ -72,7 +72,7 @@ function Footer({
                 }
                 if(key==='profile')
                 {
-                  navigate('/app/profile')
+                  navigate('/app/profile/:id')
                 }
                 if(key==='home'){
                   navigate("/app/foryou")

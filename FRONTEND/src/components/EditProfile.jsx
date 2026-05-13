@@ -6,7 +6,7 @@ const navigate=useNavigate()
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    username: "",
+    userName: "",
     bio: "",
   });
   const [profileImage, setProfileImage] = useState(null);
@@ -30,23 +30,42 @@ const navigate=useNavigate()
     setProfileImage(URL.createObjectURL(file));
   };
 
-  const validate = () => {
-    const errs = {};
-    if (!form.firstName.trim()) errs.firstName = "First name is required";
-    if (!form.username.trim()) errs.username = "Username is required";
-    if (form.username.includes(" ")) errs.username = "No spaces allowed";
-    return errs;
-  };
+const validate = () => {
+  const errs = {};
+  
+  const hasTextInput = form.firstName.trim() || form.lastName.trim() || form.userName.trim() || form.bio.trim();
+  const hasImage = fileRef.current?.files[0];
+  if (!hasTextInput && !hasImage) {
+    errs.general = "Please fill at least one field";
+  }
+  if (form.userName && form.userName.includes(" ")) 
+    errs.userName = "No spaces allowed";
+  return errs;
+};
 
-  const handleSave =async () => {
+  const handleSave = async () => {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-const res= await axios.put("http://localhost:2167/user-api/users/update-profile",form,{withCredentials:true})
-  if(res.status===200){
-    navigate('/profile')
-  }
-    setSaved(true);
-  };
+    const formData = new FormData()
+    if (form.firstName.trim()) formData.append("firstName", form.firstName)
+    if (form.lastName.trim())  formData.append("lastName",  form.lastName)
+    if (form.userName.trim())  formData.append("userName", form.userName)
+    if (form.bio.trim())       formData.append("bio", form.bio)
+
+    if (fileRef.current?.files[0]) {
+      formData.append("profileImageUrl", fileRef.current.files[0])
+    }
+
+    const res = await axios.put(
+        "http://localhost:2167/user-api/users/update-profile",
+        formData,
+        { withCredentials: true, headers: { "Content-Type": "multipart/form-data" }}
+    )
+    if(res.status === 200){
+        setSaved(true)
+        setTimeout(() => navigate(-1), 1500)
+    }
+};
 
   const inputStyle = (field) => ({
     width: "100%",
@@ -269,7 +288,7 @@ const res= await axios.put("http://localhost:2167/user-api/users/update-profile"
 
           {/* Top bar */}
           <div className="ep-topbar">
-            <button className="ep-btn-cancel">Cancel</button>
+            <button className="ep-btn-cancel" onClick={() => navigate(-1)}>Cancel</button>
             <span className="ep-topbar-title">Edit profile</span>
             <button
               className={`ep-btn-save${saved ? " saved" : ""}`}
@@ -343,15 +362,15 @@ const res= await axios.put("http://localhost:2167/user-api/users/update-profile"
                 <span className="ep-label">Username</span>
                 <div className="ep-input-wrap">
                   <input
-                    style={inputStyle("username")}
-                    value={form.username}
-                    onChange={handleChange("username")}
+                    style={inputStyle("userName")}
+                    value={form.userName}
+                    onChange={handleChange("userName")}
                     placeholder="username"
                     autoComplete="username"
                   />
                 </div>
               </div>
-              {errors.username && <p className="ep-error-text">{errors.username}</p>}
+              {errors.userName && <p className="ep-error-text">{errors.userName}</p>}
             </div>
 
             {/* Bio */}

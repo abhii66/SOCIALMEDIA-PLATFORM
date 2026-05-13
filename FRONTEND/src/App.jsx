@@ -13,6 +13,8 @@ import Profile from './components/Profile.jsx'
 import EditProfile from './components/EditProfile.jsx'
 import EditPost from './components/EditPost.jsx'
 import PostDetail from './components/PostDetail.jsx'
+//import FollowingList from './components/FollowingList.jsx'
+//import FollowersList from './components/FollowersList.jsx'
 import { useAuth } from './store/authStore.js'
 import { useEffect } from 'react'
 function App() {
@@ -42,9 +44,10 @@ function App() {
         { path: "likedposts",       element: <LikedPosts /> },
         { path: "postsupload",      element: <PostsUpload /> },
         { path: "profile/:id",          element: <Profile /> },
-        { path: "editprofile",      element: <EditProfile /> }
       ]
     },
+      
+      { path: "/editprofile",      element: <EditProfile /> },
       { path: "/edit-post", element: <EditPost /> },
       { path: "/post/:id",      element: <PostDetail /> }
   ])
