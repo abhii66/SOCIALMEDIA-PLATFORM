@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import axios from 'axios'
+import { useAuth } from '../store/authStore'
 
 const BASE_URL = "http://localhost:2167"
 
@@ -46,15 +47,23 @@ export const formatTime = (date) => {
 }
 
 // ── Post Card ──────────────────────────────
-export default function PostCard({ post, currentUser }) {
+export default function PostCard({ post, defaultSaved  }) {
   const navigate = useNavigate()
-
-  const [liked, setLiked] = useState(() =>
-    post.likes?.some(id => id.toString() === currentUser?._id?.toString())
-  )
-  const [likeCount, setLikeCount] = useState(post.likes?.length || 0)
-  const [saved, setSaved] = useState(
-    currentUser?.savedPosts?.some(id => id.toString() === post._id?.toString())
+    const { currentUser, authLoading } = useAuth()
+    const currentUserId = currentUser?._id
+    const [liked, setLiked] = useState(false)
+    useEffect(() => {
+      if (authLoading || !currentUserId) return
+      const isLiked = post.likes?.some(id => {
+      const likeId = id?._id ?? id
+      return likeId?.toString() === currentUserId.toString()}) ?? false
+      setLiked(isLiked)
+      }, [authLoading,currentUserId, post._id])
+    const [likeCount, setLikeCount] = useState(post.likes?.length ?? 0)
+    const [saved, setSaved] = useState(
+    defaultSaved !== undefined
+      ? defaultSaved
+      : currentUser?.savedPosts?.some(id => id.toString() === post._id?.toString()) ?? false
   )
 
   const handleLike = async (e) => {

@@ -5,7 +5,7 @@ import { useAuth } from '../store/authStore.js'
 import { useEffect } from 'react'
 import { Outlet,useLocation } from 'react-router'
 
-const HIDE_HEADER_ON = ['/app/postsupload', '/app/profile/:id', '/app/editprofile', '/app/savedposts', '/app/likedposts','/app/followingpeople']
+const HIDE_HEADER_ON = ['/app/postsupload', '/app/profile', '/app/editprofile', '/app/savedposts', '/app/likedposts','/app/followingpeople']
 const HIDE_FOOTER_ON = ['/app/postsupload']
 const FULL_PAGE_ROUTES = ['/app/postsupload']
 
@@ -17,7 +17,7 @@ function RootLayout() {
   
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#FFFFFF", minHeight: "100vh", color: "#000" }}>
-      {!HIDE_HEADER_ON.includes(pathname) && (
+      {!HIDE_HEADER_ON.some(path => pathname.startsWith(path)) && (
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
