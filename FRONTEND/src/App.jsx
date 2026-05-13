@@ -41,9 +41,10 @@ function App() {
         { path: "savedposts",       element: <SavedPosts /> },
         { path: "likedposts",       element: <LikedPosts /> },
         { path: "postsupload",      element: <PostsUpload /> },
+        { path: "profile/:id",          element: <Profile /> },
       ]
     },
-      { path: "/profile/:id",          element: <Profile /> },
+      
       { path: "/editprofile",      element: <EditProfile /> },
       { path: "/edit-post", element: <EditPost /> },
       { path: "/post/:id",      element: <PostDetail /> }
