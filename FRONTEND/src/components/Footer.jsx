@@ -1,5 +1,7 @@
 import React from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useLocation } from 'react-router'
+import { useAuth } from '../store/authStore.js'
+
 const PlusIcon = () => (
   <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
     <rect x="1" y="1" width="20" height="20" rx="6" stroke="currentColor" strokeWidth="1.8" />
@@ -24,17 +26,17 @@ const HomeIcon = ({ filled }) => (
 )
 
 const FOOTER_TABS = [
-  { key: "home",    Icon: HomeIcon },
-  { key: "compose", Icon: PlusIcon },
-  { key: "profile", Icon: UserIcon },
+  { key: "home",    Icon: HomeIcon, path: "/app/foryou" },
+  { key: "compose", Icon: PlusIcon, path: "/app/postsupload" },
+  { key: "profile", Icon: UserIcon, path: "/app/profile" },
 ]
 
-function Footer({
-  activeNav = "home",
-  onNavChange = () => {},
-  onCompose = () => {},
-}) {
-    const navigate=useNavigate()
+function Footer() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const activeNav = FOOTER_TABS.find(t => location.pathname.startsWith(t.path))?.key || "home"
+
   return (
     <footer
       style={{
@@ -59,26 +61,17 @@ function Footer({
           justifyContent: "space-around",
         }}
       >
-        {FOOTER_TABS.map(({ key, Icon }) => {
+        {FOOTER_TABS.map(({ key, Icon, path }) => {
           const isActive  = activeNav === key
           const isCompose = key === "compose"
 
           return (
             <button
               key={key}
-              onClick={() => {
-                if(key==='compose'){
-                  navigate('/app/postsupload')
+                onClick={() => {if (key === "profile") { navigate(`/app/profile/${user?._id}`)} 
+                else {
+                  navigate(path)
                 }
-                if(key==='profile')
-                {
-                  navigate('/app/profile/:id')
-                }
-                if(key==='home'){
-                  navigate("/app/foryou")
-                }
-                // if (isCompose) { onCompose(); return }
-                 onNavChange(key)
               }}
               style={{
                 display: "flex",

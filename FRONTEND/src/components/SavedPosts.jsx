@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import PostCard from './PostCard'
+import { useAuth } from '../store/authStore.js'
 
 const fmt = (n) => (n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n));
 
@@ -71,105 +73,104 @@ function Avatar({ src, name = "", size = 38 }) {
   );
 }
 
-function PostCard({ post, onUnsave }) {
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes ?? 0);
-  const [saved, setSaved] = useState(true); // always true on saved page
+// function PostCard({ post, onUnsave }) {
+//   const [liked, setLiked] = useState(false);
+//   const [likeCount, setLikeCount] = useState(post.likes ?? 0);
+//   const [saved, setSaved] = useState(true); // always true on saved page
+//   const handleLike = () => {
+//     setLiked((l) => !l);
+//     setLikeCount((c) => (liked ? c - 1 : c + 1));
+//   };
 
-  const handleLike = () => {
-    setLiked((l) => !l);
-    setLikeCount((c) => (liked ? c - 1 : c + 1));
-  };
+//   const handleSave = async () => {
+//     setSaved(false);
+//     try {
+//       await axios.put(
+//         `http://localhost:2167/user-api/users/saved/${post._id}`,
+//         {},
+//         { withCredentials: true }
+//       );
+//       onUnsave(post._id); // remove from list
+//     } catch (err) {
+//       setSaved(true); // revert on error
+//     }
+//   };
 
-  const handleSave = async () => {
-    setSaved(false);
-    try {
-      await axios.put(
-        `http://localhost:2167/user-api/users/saved/${post._id}`,
-        {},
-        { withCredentials: true }
-      );
-      onUnsave(post._id); // remove from list
-    } catch (err) {
-      setSaved(true); // revert on error
-    }
-  };
+//   return (
+//     <div style={{
+//       display: "flex", gap: 12, padding: "14px 16px",
+//       borderBottom: "1px solid #efefef",
+//       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+//     }}>
+//       <Avatar src={post.avatarUrl} name={post.author_name || "U"} size={38} />
 
-  return (
-    <div style={{
-      display: "flex", gap: 12, padding: "14px 16px",
-      borderBottom: "1px solid #efefef",
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    }}>
-      <Avatar src={post.avatarUrl} name={post.author_name || "U"} size={38} />
+//       <div style={{ flex: 1, minWidth: 0 }}>
+//         <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+//           <span style={{ fontSize: 14, fontWeight: 600, color: "#000" }}>
+//             {post.author_name || "Unknown"}
+//           </span>
+//           <span style={{ fontSize: 13, color: "#999", marginLeft: 8 }}>
+//             {post.createdAt ? timeAgo(post.createdAt) : ""}
+//           </span>
+//           <button style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#999", padding: 4, display: "flex" }}>
+//             <MoreIcon />
+//           </button>
+//         </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#000" }}>
-            {post.author_name || "Unknown"}
-          </span>
-          <span style={{ fontSize: 13, color: "#999", marginLeft: 8 }}>
-            {post.createdAt ? timeAgo(post.createdAt) : ""}
-          </span>
-          <button style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#999", padding: 4, display: "flex" }}>
-            <MoreIcon />
-          </button>
-        </div>
+//         {post.content && (
+//           <p style={{ fontSize: 14, lineHeight: 1.55, color: "#000", margin: "0 0 10px" }}>
+//             {post.content}
+//           </p>
+//         )}
 
-        {post.content && (
-          <p style={{ fontSize: 14, lineHeight: 1.55, color: "#000", margin: "0 0 10px" }}>
-            {post.content}
-          </p>
-        )}
+//         {post.imageUrl && (
+//           <img src={post.imageUrl} alt="post"
+//             style={{ width: "100%", maxHeight: 400, objectFit: "cover", borderRadius: 10, border: "1px solid #efefef", marginBottom: 10, display: "block" }} />
+//         )}
 
-        {post.imageUrl && (
-          <img src={post.imageUrl} alt="post"
-            style={{ width: "100%", maxHeight: 400, objectFit: "cover", borderRadius: 10, border: "1px solid #efefef", marginBottom: 10, display: "block" }} />
-        )}
+//         <div style={{ display: "flex", alignItems: "center", marginTop: 8 }}>
+//           <button onClick={handleLike} aria-label="like" style={{
+//             background: "none", border: "none", cursor: "pointer",
+//             padding: "6px 10px 6px 0", display: "flex", alignItems: "center",
+//             color: liked ? "#ff3040" : "#555",
+//           }}>
+//             <HeartIcon filled={liked} />
+//           </button>
 
-        <div style={{ display: "flex", alignItems: "center", marginTop: 8 }}>
-          <button onClick={handleLike} aria-label="like" style={{
-            background: "none", border: "none", cursor: "pointer",
-            padding: "6px 10px 6px 0", display: "flex", alignItems: "center",
-            color: liked ? "#ff3040" : "#555",
-          }}>
-            <HeartIcon filled={liked} />
-          </button>
+//           <button aria-label="comment" style={{
+//             background: "none", border: "none", cursor: "pointer",
+//             padding: "6px 10px", display: "flex", alignItems: "center", color: "#555",
+//           }}>
+//             <CommentIcon />
+//           </button>
 
-          <button aria-label="comment" style={{
-            background: "none", border: "none", cursor: "pointer",
-            padding: "6px 10px", display: "flex", alignItems: "center", color: "#555",
-          }}>
-            <CommentIcon />
-          </button>
+//           <button onClick={handleSave} aria-label="unsave" style={{
+//             marginLeft: "auto",
+//             background: "none", border: "none", cursor: "pointer",
+//             padding: "6px 0", display: "flex", alignItems: "center",
+//             color: "#000",
+//           }}>
+//             <SaveIcon filled={saved} />
+//           </button>
+//         </div>
 
-          <button onClick={handleSave} aria-label="unsave" style={{
-            marginLeft: "auto",
-            background: "none", border: "none", cursor: "pointer",
-            padding: "6px 0", display: "flex", alignItems: "center",
-            color: "#000",
-          }}>
-            <SaveIcon filled={saved} />
-          </button>
-        </div>
-
-        {(likeCount > 0 || post.comments > 0) && (
-          <div style={{ fontSize: 13, color: "#999", marginTop: 3 }}>
-            {likeCount > 0 && `${fmt(likeCount)} like${likeCount === 1 ? "" : "s"}`}
-            {likeCount > 0 && post.comments > 0 && " · "}
-            {post.comments > 0 && `${fmt(post.comments)} repl${post.comments === 1 ? "y" : "ies"}`}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+//         {(likeCount > 0 || post.comments > 0) && (
+//           <div style={{ fontSize: 13, color: "#999", marginTop: 3 }}>
+//             {likeCount > 0 && `${fmt(likeCount)} like${likeCount === 1 ? "" : "s"}`}
+//             {likeCount > 0 && post.comments > 0 && " · "}
+//             {post.comments > 0 && `${fmt(post.comments)} repl${post.comments === 1 ? "y" : "ies"}`}
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
 
 export default function SavedPosts() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const { user } = useAuth()
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -244,7 +245,7 @@ export default function SavedPosts() {
 
       {/* ── Posts ── */}
       {!loading && !error && posts.map((post) => (
-        <PostCard key={post._id} post={post} onUnsave={handleUnsave} />
+        <PostCard key={post._id} post={post} currentUser={user} defaultSaved={true}/>
       ))}
     </div>
   );
