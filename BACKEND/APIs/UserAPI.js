@@ -378,7 +378,13 @@ userApp.put('/users/saved/:id',verifyToken,async (req,res)=>{
 userApp.get("/users/saved", verifyToken,async (req,res)=>{
     //userobj from usermodel
    const userId=req.user?._id
-   const posts=await UserModel.findById(userId).populate("savedPosts")
+   const posts=await UserModel.findById(userId).populate({path: "savedPosts",
+        populate: {
+        path: "author",
+        select: "firstName lastName userName profileImageUrl"
+        }
+    })
+
    //res
    res.status(200).json({message:"Saved Posts: ",payload:posts.savedPosts})
 })
