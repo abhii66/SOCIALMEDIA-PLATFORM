@@ -13,6 +13,8 @@ import Profile from './components/Profile.jsx'
 import EditProfile from './components/EditProfile.jsx'
 import EditPost from './components/EditPost.jsx'
 import PostDetail from './components/PostDetail.jsx'
+//import FollowingList from './components/FollowingList.jsx'
+//import FollowersList from './components/FollowersList.jsx'
 import { useAuth } from './store/authStore.js'
 import { useEffect } from 'react'
 function App() {
@@ -32,7 +34,7 @@ function App() {
     },
     {
       path: "/app",
-      element: <RootLayout />,   // Footer lives here, Outlet renders children
+      element: <RootLayout />,
       children: [
         { index: true,              element: <Navigate to="foryou" replace /> },
         { path: "foryou",           element: <ForYouPosts /> },
