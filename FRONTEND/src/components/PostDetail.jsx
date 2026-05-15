@@ -55,20 +55,6 @@ const formatTime = (date) => {
   return new Date(date).toLocaleDateString("en-IN", { dateStyle: "medium" })
 }
 
-// ── Post Detail ────────────────────────────
-export default function PostDetail() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { currentUser, authLoading } = useAuth()
-  const [post, setPost] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [liked, setLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(0)
-  const [saved, setSaved] = useState(false)
-  const [comment, setComment] = useState("")
-  const [commenting, setCommenting] = useState(false)
-  
 // ── Comment Card ───────────────────────────
 function CommentCard({ comment }) {
   const navigate = useNavigate()
@@ -99,10 +85,12 @@ function CommentCard({ comment }) {
       </div>
 
       <div style={{ flex: 1 }}>
+        {/* Fixed: removed duplicate style prop */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-          <span onClick={() => navigate(`/app/profile/${comment.user?._id}`)}
-            style={{ cursor: "pointer" }} 
-            style={{ fontSize: 14, fontWeight: 600, color: "#000" }}>
+          <span
+            onClick={() => navigate(`/app/profile/${comment.user?._id}`)}
+            style={{ fontSize: 14, fontWeight: 600, color: "#000", cursor: "pointer" }}
+          >
             {comment.user?.firstName} {comment.user?.lastName}
           </span>
           <span style={{ fontSize: 12, color: "#aaa" }}>@{comment.user?.userName}</span>
@@ -118,8 +106,30 @@ function CommentCard({ comment }) {
   )
 }
 
+// ── Post Detail ────────────────────────────
+export default function PostDetail() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { currentUser, authLoading, updateFollowing } = useAuth()
+  const [post, setPost] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [liked, setLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(0)
+  const [saved, setSaved] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
+  const [comment, setComment] = useState("")
+  const [commenting, setCommenting] = useState(false)
+  const [lightbox, setLightbox] = useState(false)
 
-useEffect(() => {
+  const isOwnPost = currentUser?._id?.toString() === post?.author?._id?.toString()
+
+  const followed = currentUser?.following?.some(id => {
+    const fid = id?._id ?? id
+    return fid?.toString() === post?.author?._id?.toString()
+  }) ?? false
+
+  useEffect(() => {
     if (authLoading) return
 
     const fetchPost = async () => {
@@ -131,7 +141,7 @@ useEffect(() => {
         setLiked(data.likes?.some(lid => lid.toString() === currentUser?._id?.toString()))
         setLikeCount(data.likes?.length || 0)
         setSaved(currentUser?.savedPosts?.some(sid => sid.toString() === data._id?.toString()))
-      } catch(err) {
+      } catch (err) {
         setError("Failed to load post")
       } finally {
         setLoading(false)
@@ -139,16 +149,15 @@ useEffect(() => {
     }
 
     fetchPost()
+  }, [id, currentUser, authLoading])
 
-}, [id, currentUser, authLoading])
-
-    const handleLike = async () => {
+  const handleLike = async () => {
     const newLiked = !liked
     setLiked(newLiked)
     setLikeCount(c => newLiked ? c + 1 : c - 1)
     try {
       await axios.patch(`${BASE_URL}/post-api/posts/${id}/like`, {}, { withCredentials: true })
-    } catch(err) {
+    } catch (err) {
       setLiked(!newLiked)
       setLikeCount(c => newLiked ? c - 1 : c + 1)
     }
@@ -159,8 +168,26 @@ useEffect(() => {
     setSaved(newSaved)
     try {
       await axios.put(`${BASE_URL}/user-api/users/saved/${id}`, {}, { withCredentials: true })
-    } catch(err) {
+    } catch (err) {
       setSaved(!newSaved)
+    }
+  }
+
+  const handleFollow = async () => {
+    if (followLoading) return
+    setFollowLoading(true)
+    const newFollowed = !followed
+    updateFollowing(post.author._id, newFollowed)
+    try {
+      await axios.put(
+        `${BASE_URL}/user-api/users/following`,
+        {email: post.author?.email},
+        { withCredentials: true }
+      )
+    } catch (err) {
+      updateFollowing(post.author._id, !newFollowed)
+    } finally {
+      setFollowLoading(false)
     }
   }
 
@@ -173,31 +200,31 @@ useEffect(() => {
         { postId: id, comment },
         { withCredentials: true }
       )
-    setPost(prev => ({
-      ...prev,
-      comments: res.data.payload.comments,
-    }))
+      setPost(prev => ({
+        ...prev,
+        comments: res.data.payload.comments,
+      }))
       setComment("")
-    } catch(err) {
+    } catch (err) {
       console.log(err)
     } finally {
       setCommenting(false)
     }
   }
 
-    if(loading || authLoading) return (
-        <div style={{ textAlign: "center", padding: "40px 0", color: "#aaa", fontSize: 14 }}>
-            Loading...
-        </div>
-    )
+  if (loading || authLoading) return (
+    <div style={{ textAlign: "center", padding: "40px 0", color: "#aaa", fontSize: 14 }}>
+      Loading...
+    </div>
+  )
 
-  if(error) return (
+  if (error) return (
     <div style={{ textAlign: "center", padding: "40px 0", color: "#e05454", fontSize: 14 }}>
       {error}
     </div>
   )
 
-  if(!post) return null
+  if (!post) return null
 
   return (
     <div style={{
@@ -225,16 +252,23 @@ useEffect(() => {
           <BackIcon />
         </button>
         <span style={{ fontSize: 16, fontWeight: 700, color: "#000" }}>Post</span>
-        {currentUser?._id?.toString() === post?.author?._id?.toString() ? (
-            <div style={{display: "flex",width: "100%"}}>
-        <button
-            onClick={() => navigate("/edit-post", { state: { post } })}
-            style={{ background: "#000",padding:8,borderRadius:50 ,border: "none", fontSize: 16, fontWeight: 700, color: "#FFFFFF", cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" }} >
-            Edit
-        </button></div>
+        {isOwnPost ? (
+          <div style={{ display: "flex", width: "100%" }}>
+            <button
+              onClick={() => navigate("/edit-post", { state: { post } })}
+              style={{
+                background: "#000", padding: 8, borderRadius: 50,
+                border: "none", fontSize: 16, fontWeight: 700,
+                color: "#fff", cursor: "pointer",
+                fontFamily: "inherit", marginLeft: "auto",
+              }}
+            >
+              Edit
+            </button>
+          </div>
         ) : (
-      <div style={{ width: 40 }} />
-      )}
+          <div style={{ width: 40 }} />
+        )}
       </div>
 
       <div style={{ maxWidth: 576, margin: "0 auto", padding: "16px 16px 100px" }}>
@@ -242,7 +276,7 @@ useEffect(() => {
         {/* ── Post ── */}
         <div style={{ paddingBottom: 16, borderBottom: "0.5px solid #e5e5e5" }}>
 
-          {/* Author */}
+          {/* Author row */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
             {post.author?.profileImageUrl ? (
               <img
@@ -260,13 +294,46 @@ useEffect(() => {
                 {post.author?.firstName?.charAt(0).toUpperCase()}
               </div>
             )}
-            <div onClick={() => navigate(`/app/profile/${post.author?._id}`)} style={{ cursor: "pointer" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#000" }}>
-                {post.author?.firstName} {post.author?.lastName}
+
+            {/* Name + follow */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div
+                  onClick={() => navigate(`/app/profile/${post.author?._id}`)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "#000" }}>
+                    {post.author?.firstName} {post.author?.lastName}
+                  </div>
+                  <div style={{ fontSize: 13, color: "#aaa" }}>@{post.author?.userName}</div>
+                </div>
+
+                {/* Follow button — hidden for own posts */}
+                {!isOwnPost && !authLoading && (
+                  <button
+                    onClick={handleFollow}
+                    disabled={followLoading}
+                    style={{
+                      background: followed ? "transparent" : "#000",
+                      border: followed ? "1.5px solid #d0d0d0" : "1.5px solid #000",
+                      borderRadius: 20,
+                      padding: "4px 14px",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: followed ? "#555" : "#fff",
+                      cursor: followLoading ? "not-allowed" : "pointer",
+                      fontFamily: "inherit",
+                      transition: "all 0.2s",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {followed ? "Following" : "Follow"}
+                  </button>
+                )}
               </div>
-              <div style={{ fontSize: 13, color: "#aaa" }}>@{post.author?.userName}</div>
             </div>
-            <span style={{ fontSize: 13, color: "#ccc", marginLeft: "auto" }}>
+
+            <span style={{ fontSize: 13, color: "#ccc", flexShrink: 0 }}>
               {formatTime(post.createdAt)}
             </span>
           </div>
@@ -294,10 +361,12 @@ useEffect(() => {
             <img
               src={post.imageUrl}
               alt=""
+              onClick={() => setLightbox(true)}
               style={{
                 width: "100%", borderRadius: 12,
                 objectFit: "cover", maxHeight: 400,
                 marginBottom: 12,
+                cursor:"pointer",
               }}
             />
           )}
@@ -316,10 +385,11 @@ useEffect(() => {
               <HeartIcon filled={liked} />
               {fmt(likeCount)}
             </button>
-              <CommentIcon filled={comment} /> 
-            <span style={{ fontSize: 14, color: "#888" }}>
-            {fmt(post.comments?.length || 0)}
-            </span>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#888" }}>
+              <CommentIcon />
+              <span style={{ fontSize: 14 }}>{fmt(post.comments?.length || 0)}</span>
+            </div>
 
             <button
               onClick={handleSave}
@@ -380,12 +450,11 @@ useEffect(() => {
             </div>
           )}
 
-          {/* Input */}
           <input
             type="text"
             value={comment}
             onChange={e => setComment(e.target.value)}
-            onKeyDown={e => { if(e.key === "Enter") handleComment() }}
+            onKeyDown={e => { if (e.key === "Enter") handleComment() }}
             placeholder="Add a comment..."
             style={{
               flex: 1, border: "1.5px solid rgba(0,0,0,0.1)",
@@ -395,7 +464,6 @@ useEffect(() => {
             }}
           />
 
-          {/* Send button */}
           <button
             onClick={handleComment}
             disabled={!comment.trim() || commenting}
@@ -413,6 +481,44 @@ useEffect(() => {
           </button>
         </div>
       </div>
+      {lightbox && (
+  <div
+    onClick={() => setLightbox(false)}
+    style={{
+      position: "fixed", inset: 0, zIndex: 1000,
+      background: "rgba(0,0,0,0.95)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}
+  >
+    {/* Close button */}
+    <button
+      onClick={() => setLightbox(false)}
+      style={{
+        position: "absolute", top: 16, right: 16,
+        background: "rgba(255,255,255,0.15)",
+        border: "none", borderRadius: "50%",
+        width: 36, height: 36,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#fff",
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    </button>
+
+    {/* Image */}
+    <img
+      src={post.imageUrl}
+      alt=""
+      onClick={e => e.stopPropagation()}
+      style={{
+        maxWidth: "95vw", maxHeight: "95vh",
+        objectFit: "contain", borderRadius: 8,
+      }}
+    />
+    </div>
+  )}
     </div>
   )
 }

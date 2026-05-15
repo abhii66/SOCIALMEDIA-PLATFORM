@@ -15,8 +15,8 @@ POST http://localhost:2167/user-api/users/login
 Content-Type: application/json
 
 {
-    "idCreds":"ramjieeagamannolla@gmail.com",
-    "password":"123456"
+    "idCreds":"zoro_is_lost",
+    "password":"forgot"
 }
 
 ###user logout
@@ -65,7 +65,7 @@ PUT http://localhost:2167/user-api/users/following
 Content-Type: application/json
 
 {
-    "email":"24eg105j07@anurag.edu.in"
+    "email":"lewishamilton44@gmail.com"
 }
 ### check-author
 GET http://localhost:2167/user-api/check-auth
