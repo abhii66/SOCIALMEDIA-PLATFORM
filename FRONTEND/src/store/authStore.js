@@ -100,5 +100,12 @@ export const useAuth = create((set)=>({
         }catch(err){
             return false
         }
-    }
+    },
+    updateFollowing: (targetUserId, isFollowing) => set((state) => {
+        const following = state.currentUser?.following ?? []
+        const updated = isFollowing
+        ? [...following, targetUserId]
+        : following.filter(id => id?.toString() !== targetUserId?.toString())
+        return { currentUser: { ...state.currentUser, following: updated } }
+    })
 }))

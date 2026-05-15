@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import axios from 'axios'
 import { useAuth } from '../store/authStore'
@@ -47,24 +47,33 @@ export const formatTime = (date) => {
 }
 
 // ── Post Card ──────────────────────────────
-export default function PostCard({ post, defaultSaved  }) {
+export default function PostCard({ post, defaultSaved }) {
   const navigate = useNavigate()
-    const { currentUser, authLoading } = useAuth()
-    const currentUserId = currentUser?._id
-    const [liked, setLiked] = useState(false)
-    useEffect(() => {
-      if (authLoading || !currentUserId) return
-      const isLiked = post.likes?.some(id => {
-      const likeId = id?._id ?? id
-      return likeId?.toString() === currentUserId.toString()}) ?? false
-      setLiked(isLiked)
-      }, [authLoading,currentUserId, post._id])
-    const [likeCount, setLikeCount] = useState(post.likes?.length ?? 0)
-    const [saved, setSaved] = useState(
+  const { currentUser, authLoading, updateFollowing } = useAuth()
+  const currentUserId = currentUser?._id
+  const isOwnPost = currentUserId?.toString() === post.author?._id?.toString()
+  const [liked, setLiked] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
+  const [likeCount, setLikeCount] = useState(post.likes?.length ?? 0)
+  const [saved, setSaved] = useState(
     defaultSaved !== undefined
       ? defaultSaved
       : currentUser?.savedPosts?.some(id => id.toString() === post._id?.toString()) ?? false
   )
+
+  useEffect(() => {
+    if (authLoading || !currentUserId) return
+    const isLiked = post.likes?.some(id => {
+      const likeId = id?._id ?? id
+      return likeId?.toString() === currentUserId.toString()
+    }) ?? false
+    setLiked(isLiked)
+  }, [authLoading, currentUserId, post._id])
+
+  const followed = currentUser?.following?.some(id => {
+    const fid = id?._id ?? id
+    return fid?.toString() === post.author?._id?.toString()
+  }) ?? false
 
   const handleLike = async (e) => {
     e.stopPropagation()
@@ -73,7 +82,7 @@ export default function PostCard({ post, defaultSaved  }) {
     setLikeCount(c => newLiked ? c + 1 : c - 1)
     try {
       await axios.patch(`${BASE_URL}/post-api/posts/${post._id}/like`, {}, { withCredentials: true })
-    } catch(err) {
+    } catch (err) {
       setLiked(!newLiked)
       setLikeCount(c => newLiked ? c - 1 : c + 1)
     }
@@ -85,8 +94,26 @@ export default function PostCard({ post, defaultSaved  }) {
     setSaved(newSaved)
     try {
       await axios.put(`${BASE_URL}/user-api/users/saved/${post._id}`, {}, { withCredentials: true })
-    } catch(err) {
+    } catch (err) {
       setSaved(!newSaved)
+    }
+  }
+
+  const handleFollow = async (e) => {
+    e.stopPropagation()
+    if (followLoading) return
+    setFollowLoading(true)
+    const newFollowed = !followed
+    updateFollowing(post.author._id, newFollowed)
+    try {
+        await axios.put(`${BASE_URL}/user-api/users/following`,
+          { email: post.author?.email },
+          { withCredentials: true }
+        )
+    } catch (err) {
+      updateFollowing(post.author._id, !newFollowed)
+    } finally {
+      setFollowLoading(false)
     }
   }
 
@@ -127,6 +154,30 @@ export default function PostCard({ post, defaultSaved  }) {
             {post.author?.firstName} {post.author?.lastName}
           </span>
           <span style={{ fontSize: 13, color: "#aaa" }}>@{post.author?.userName}</span>
+
+          {/* Follow button — hidden for own posts */}
+          {!isOwnPost && !authLoading && (
+            <button
+              onClick={handleFollow}
+              style={{
+                background: followed ? "transparent" : "#000",
+                border: followed ? "1.5px solid #d0d0d0" : "1.5px solid #000",
+                borderRadius: 20,
+                padding: "2px 10px",
+                fontSize: 12,
+                fontWeight: 600,
+                color: followed ? "#555" : "#fff",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                transition: "all 0.2s",
+                lineHeight: 1.6,
+                flexShrink: 0,
+              }}
+            >
+              {followed ? "Following" : "Follow"}
+            </button>
+          )}
+
           <span style={{ fontSize: 13, color: "#ccc", marginLeft: "auto" }}>
             {formatTime(post.createdAt)}
           </span>

@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 import { Outlet,useLocation } from 'react-router'
 
 const HIDE_HEADER_ON = ['/app/postsupload', '/app/profile', '/app/editprofile', '/app/savedposts', '/app/likedposts','/app/followingpeople']
-const HIDE_FOOTER_ON = ['/app/postsupload']
+const HIDE_FOOTER_ON = ['/app/postsupload','/app/savedposts']
 const FULL_PAGE_ROUTES = ['/app/postsupload']
 
 function RootLayout() {
