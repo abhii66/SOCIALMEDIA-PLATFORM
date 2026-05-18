@@ -41,6 +41,10 @@ const postSchema = new Schema({
     isPostActive:{
         type:Boolean,
         default:true
+    },
+    deletedAt: {
+        type: Date,
+        default: null 
     }
 },
 {

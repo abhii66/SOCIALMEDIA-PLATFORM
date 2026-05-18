@@ -5,22 +5,21 @@ import { useAuth } from '../store/authStore.js'
 import { useEffect } from 'react'
 import { Outlet,useLocation } from 'react-router'
 
-const HIDE_HEADER_ON = ['/app/postsupload', '/app/profile', '/app/editprofile', '/app/savedposts', '/app/likedposts','/app/followingpeople']
+const HIDE_HEADER_ON = ['/app/postsupload', '/app/profile', '/app/editprofile', '/app/savedposts', '/app/likedposts','/app/followingpeople','/app/search','/app/settings','/app/recently-deleted']
 const HIDE_FOOTER_ON = ['/app/postsupload','/app/savedposts']
 const FULL_PAGE_ROUTES = ['/app/postsupload']
 
 function RootLayout() {
-  const [activeTab, setActiveTab] = useState("For You")
+  const { pathname } = useLocation()
+  const activeTab = pathname.startsWith("/app/following") ? "Following" : "ForYou"
   const [activeNav, setActiveNav] = useState("home")
   const [menuOpen, setMenuOpen] = useState(false)
-  const { pathname } = useLocation()
   
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#FFFFFF", minHeight: "100vh", color: "#000" }}>
       {!HIDE_HEADER_ON.some(path => pathname.startsWith(path)) && (
       <Header
         activeTab={activeTab}
-        onTabChange={setActiveTab}
         menuOpen={menuOpen}
         onMenuOpen={() => setMenuOpen(o => !o)}
       />

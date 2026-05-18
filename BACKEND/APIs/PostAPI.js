@@ -17,10 +17,6 @@ postApp.post("/posts",upload.single("imageUrl"),verifyToken,async(req,res)=>{
     if(!user){
         return res.status(404).json({message:"User Not Found."})
     }
-    // if(!req.file){
-    //     return res.json({message:"plz upload posts"})
-    // }
-    // postInfo.imageUrl = req.file.path
     if(req.file){
         const cloudinaryResult = await uploadToCloudinary(req.file.buffer)
         postInfo.imageUrl = cloudinaryResult.secure_url
@@ -33,10 +29,19 @@ postApp.post("/posts",upload.single("imageUrl"),verifyToken,async(req,res)=>{
 //reading own posts
 postApp.get("/posts",verifyToken,async(req,res)=>{
     const IdOfToken=req.user?._id
-    console.log(IdOfToken)
+    // console.log(IdOfToken)
     const postView=await PostModel.find({author:IdOfToken});
-    console.log(postView)
+    // console.log(postView)
     return res.status(200).json({message:"Posts: ",payload:postView});
+})
+
+//get deleted posts
+postApp.get("/posts/deleted", verifyToken, async(req, res) => {
+    const userId = req.user?._id
+    const posts = await PostModel.find({ author: userId, isPostActive: false })
+        .populate("author", "firstName lastName userName profileImageUrl")
+        .sort({ deletedAt: -1 })
+    res.status(200).json({ message: "Deleted posts", payload: posts })
 })
 
 //read posts with id
@@ -50,12 +55,12 @@ postApp.get('/posts/:id',verifyToken,async(req,res)=>{
 //update post
 postApp.put("/posts",verifyToken,async(req,res)=>{
     //get body
-    const {postId,content}=req.body;
+    const {postId,content,category}=req.body;
     //get user id from decode token
     const IdOfToken=req.user?._id
     const newPost=await PostModel.findOneAndUpdate(
         { _id:postId,author:IdOfToken},
-        {$set:{content:content}},
+        {$set:{content:content, ...(category && {category})}},
         {new:true});
     if(!newPost){
         return res.status(403).json({message:"You are not authorized."})
@@ -81,7 +86,7 @@ postApp.patch("/posts",verifyToken,async(req,res)=>{
     }
     ///changing the status
     const result=await PostModel.findByIdAndUpdate(postId,
-        { $set:{isPostActive:isPostActive} },
+        { $set:{isPostActive:isPostActive, deletedAt: isPostActive ? null : new Date() }},
         { new:true }
     )
     res.status(200).json({message:"Status updated",payload:result})

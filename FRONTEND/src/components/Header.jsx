@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../store/authStore.js'
 
 // ── Icons ──────────────────────────────────
 const Logo = () => (
@@ -66,7 +67,6 @@ const NAV_TABS = ["ForYou", "Following"]
 const MENU_ITEMS = [
   { label: "Saved",       Icon: BookmarkIcon, color: "#333"    },
   { label: "Liked posts", Icon: HeartIcon,    color: "#333"    },
-  // { label: "Settings",    Icon: SettingsIcon, color: "#333"    },
   { label: "Log out",     Icon: LogoutIcon,   color: "#e05454" },
 ]
 
@@ -91,6 +91,7 @@ function Header({
   menuOpen = false,
 }) {
   const navigate = useNavigate()
+  const { currentUser } = useAuth()
 
   return (
     <>
@@ -139,7 +140,7 @@ function Header({
 
           {/* Search */}
           <button
-            onClick={() => navigate('/search')}
+            onClick={() => navigate('/app/search')}
             style={{ ...iconBtnBase, color: "#888" }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.06)"; e.currentTarget.style.color = "#000" }}
             onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#888" }}
@@ -150,6 +151,7 @@ function Header({
         </div>
 
         {/* ── Feed tabs ── */}
+        {!menuOpen && (
         <div style={{ maxWidth: 576, margin: "0 auto", display: "flex" }}>
           {NAV_TABS.map(tab => {
             const isActive = activeTab === tab
@@ -178,6 +180,7 @@ function Header({
             )
           })}
         </div>
+        )}
       </header>
 
       {/* ── Slide-down menu ── */}
@@ -207,33 +210,36 @@ function Header({
             }}
           >
             <div style={{ maxWidth: 576, margin: "0 auto" }}>
-              <div style={{ height: 98 }} />
+              <div style={{ height: 54, marginTop:8 }} />
 
               {/* Profile peek */}
-              <div
-                style={{
+                <div style={{
                   display: "flex", alignItems: "center", gap: 12,
                   padding: "14px 20px",
                   borderTop: "1px solid rgba(0,0,0,0.06)",
                   borderBottom: "1px solid rgba(0,0,0,0.06)",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.03)" }}
-                onMouseLeave={e => { e.currentTarget.style.background = "transparent" }}
-              >
-                <div style={{
-                  width: 40, height: 40, borderRadius: "50%",
-                  background: "linear-gradient(135deg,#7c3aed,#ec4899)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontWeight: 700, fontSize: 15, color: "#fff", flexShrink: 0,
                 }}>
-                  Y
+                  <div style={{
+                    width: 40, height: 40, borderRadius: "50%",
+                    background: "#f0f0f0", flexShrink: 0,
+                    overflow: "hidden",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 700, fontSize: 15, color: "#555",
+                  }}>
+                    {currentUser?.profileImageUrl
+                      ? <img src={currentUser.profileImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : currentUser?.firstName?.charAt(0).toUpperCase()
+                    }
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#000", lineHeight: 1.3 }}>
+                      {currentUser?.firstName} {currentUser?.lastName}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#aaa", lineHeight: 1.4 }}>
+                      @{currentUser?.userName}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "#000", lineHeight: 1.3 }}>you</div>
-                  <div style={{ fontSize: 12, color: "#aaa", lineHeight: 1.4 }}>View profile →</div>
-                </div>
-              </div>
 
               {/* Menu items with icons */}
               {MENU_ITEMS.map(({ label, Icon, color }, i) => (
@@ -243,7 +249,7 @@ function Header({
       if (label === "Saved")       navigate("/app/savedposts")
       if (label === "Liked posts") navigate("/app/likedposts")
       if (label === "Log out")     navigate("/")
-      onMenuOpen()   // ← closes the drawer after clicking
+      onMenuOpen()
     }}
                   style={{
                     display: "flex",
