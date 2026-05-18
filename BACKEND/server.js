@@ -6,6 +6,7 @@ import { postApp } from './APIs/PostAPI.js'
 import { adminApp } from './APIs/AdminAPI.js'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import cron from 'node-cron'
 
 config()
 const app = exp()
@@ -45,10 +46,17 @@ async function connectDB(){
         console.log("Error in DB connection :", err)
     }
 }
-
 connectDB();
+
 //to handle invalid path
 app.use((req,res,next)=>{
     console.log(req.url)
     res.status(404).json({message:`path ${req.url} is invalid`})
+})
+
+//scheduling
+cron.schedule('0 0 * * *', async () => {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    await PostModel.deleteMany({ isPostActive: false, deletedAt: { $lte: cutoff } })
+    console.log("Cleaned up posts deleted more than 30 days ago")
 })

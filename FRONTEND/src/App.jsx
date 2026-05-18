@@ -9,10 +9,12 @@ import SavedPosts from './components/SavedPosts.jsx'
 import LikedPosts from './components/LikedPosts.jsx'
 import Login from './components/Login.jsx'
 import PostsUpload from './components/PostsUpload.jsx'
-import Profile from './components/Profile.jsx'
+import AccountSettings from './components/AccountSettings.jsx'
 import EditProfile from './components/EditProfile.jsx'
 import EditPost from './components/EditPost.jsx'
 import PostDetail from './components/PostDetail.jsx'
+import UserProfile from './components/UserProfile.jsx'
+import RecentlyDeleted from './components/RecentlyDeleted.jsx'
 //import FollowingList from './components/FollowingList.jsx'
 //import FollowersList from './components/FollowersList.jsx'
 import { useAuth } from './store/authStore.js'
@@ -43,7 +45,10 @@ function App() {
         { path: "savedposts",       element: <SavedPosts /> },
         { path: "likedposts",       element: <LikedPosts /> },
         { path: "postsupload",      element: <PostsUpload /> },
-        { path: "profile/:id",      element: <Profile /> },
+        { path: "profile/:id",      element: <UserProfile /> },
+        { path: "settings",         element: <AccountSettings /> },
+        { path:'recently-deleted', element: <RecentlyDeleted />}
+
       ]
     },
       

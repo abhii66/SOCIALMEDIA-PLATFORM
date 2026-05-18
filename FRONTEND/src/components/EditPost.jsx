@@ -50,7 +50,7 @@ function EditPost() {
     try {
       await axios.put(
         `${BASE_URL}/post-api/posts`,
-        { postId: post._id, content: text },
+        { postId: post._id, content: text, category },
         { withCredentials: true }
       )
       navigate(`/post/${post._id}`, { replace: true })

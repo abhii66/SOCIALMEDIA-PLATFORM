@@ -32,10 +32,13 @@ const FOOTER_TABS = [
 ]
 
 function Footer() {
-  const { user } = useAuth()
+  const { currentUser } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const activeNav = FOOTER_TABS.find(t => location.pathname.startsWith(t.path))?.key || "home"
+  const activeNav = FOOTER_TABS.find(t =>  {
+  if (t.key === "profile") 
+    return location.pathname === `/app/profile/${currentUser?._id}`
+  return location.pathname.startsWith(t.path) })?.key || "home"
 
   return (
     <footer
@@ -68,7 +71,7 @@ function Footer() {
           return (
             <button
               key={key}
-                onClick={() => {if (key === "profile") { navigate(`/app/profile/${user?._id}`)} 
+                onClick={() => {if (key === "profile") { navigate(`/app/profile/${currentUser?._id}`)} 
                 else {
                   navigate(path)
                 }

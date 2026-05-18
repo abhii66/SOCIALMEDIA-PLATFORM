@@ -1,4 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+
+const BASE_URL = "http://localhost:2167"
+const RECENTS_KEY = "search_recents"
+const MAX_RECENTS = 5
 
 // ── Icons ──────────────────────────────────
 const SearchIcon = () => (
@@ -15,111 +21,172 @@ const XIcon = () => (
   </svg>
 )
 
-// ── Mock data ──────────────────────────────
-const MOCK_USERS = [
-  { id: 1, handle: "design.daily",    name: "Design Daily",    avatar: "D", color: "#6366f1", followers: "12.4K" },
-  { id: 2, handle: "rajeshwari.dev",  name: "Rajeshwari",      avatar: "R", color: "#ec4899", followers: "3.1K"  },
-  { id: 3, handle: "ui.threads",      name: "UI Threads",      avatar: "U", color: "#f59e0b", followers: "89.2K" },
-  { id: 4, handle: "codewithjay",     name: "Jay Codes",       avatar: "J", color: "#10b981", followers: "7.8K"  },
-  { id: 5, handle: "anya.creates",    name: "Anya Creates",    avatar: "A", color: "#8b5cf6", followers: "22.5K" },
-  { id: 6, handle: "techbites",       name: "Tech Bites",      avatar: "T", color: "#ef4444", followers: "45.1K" },
-  { id: 7, handle: "minimalist.life", name: "Minimalist Life", avatar: "M", color: "#06b6d4", followers: "18.9K" },
-  { id: 8, handle: "sara.builds",     name: "Sara Builds",     avatar: "S", color: "#f97316", followers: "5.3K"  },
-]
+const BackIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
 
-const RECENT_SEARCHES = ["design.daily", "ui.threads", "techbites"]
+// ── Avatar ─────────────────────────────────
+function Avatar({ src, name = "", size = 72 }) {
+  const [imgErr, setImgErr] = useState(false)
+  const initials = name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+  const colors = ["#e8e4ff", "#d6f5ea", "#fce4ee", "#fff0d6", "#ddeeff"]
+  const textColors = ["#3C3489", "#085041", "#72243E", "#633806", "#0C447C"]
+  const idx = (name.charCodeAt(0) || 0) % colors.length
+
+  if (src && !imgErr) {
+    return (
+      <img src={src} alt={name} onError={() => setImgErr(true)}
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", display: "block" }} />
+    )
+  }
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: colors[idx], color: textColors[idx],
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.3, fontWeight: 600,
+    }}>{initials}</div>
+  )
+}
+
+// ── localStorage helpers ───────────────────
+const getRecents = () => {
+  try { return JSON.parse(localStorage.getItem(RECENTS_KEY)) || [] }
+  catch { return [] }
+}
+
+const saveRecent = (user) => {
+  const prev = getRecents().filter(u => u._id !== user._id)
+  const updated = [user, ...prev].slice(0, MAX_RECENTS)
+  localStorage.setItem(RECENTS_KEY, JSON.stringify(updated))
+  return updated
+}
+
+const removeRecent = (userId) => {
+  const updated = getRecents().filter(u => u._id !== userId)
+  localStorage.setItem(RECENTS_KEY, JSON.stringify(updated))
+  return updated
+}
+
+const clearRecents = () => {
+  localStorage.removeItem(RECENTS_KEY)
+  return []
+}
 
 // ── Search Component ───────────────────────
 function Search() {
   const [query, setQuery]     = useState("")
   const [focused, setFocused] = useState(false)
   const [results, setResults] = useState([])
-  const [recents, setRecents] = useState(RECENT_SEARCHES)
+  const [recents, setRecents] = useState(getRecents)
+  const [loading, setLoading] = useState(false)
   const inputRef              = useRef(null)
+  const navigate              = useNavigate()
 
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
   useEffect(() => {
-    if (query.trim() === "") { setResults([]); return }
-    const q = query.toLowerCase()
-    setResults(MOCK_USERS.filter(u =>
-      u.handle.toLowerCase().includes(q) || u.name.toLowerCase().includes(q)
-    ))
+    if (!query.trim()) { setResults([]); return }
+    const debounce = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const res = await axios.get(`${BASE_URL}/user-api/users/search`, {
+          params: { query: query.trim() },
+          withCredentials: true,
+        })
+        setResults(res.data.payload)
+      } catch (err) {
+        if (err.response?.status === 404) setResults([])
+      } finally {
+        setLoading(false)
+      }
+    }, 400)
+    return () => clearTimeout(debounce)
   }, [query])
 
-  const clearQuery    = () => { setQuery(""); inputRef.current?.focus() }
-  const removeRecent  = (handle, e) => { e.stopPropagation(); setRecents(r => r.filter(h => h !== handle)) }
+  const clearQuery = () => { setQuery(""); setResults([]); inputRef.current?.focus() }
 
-  const showRecents = focused && query === "" && recents.length > 0
-  const showResults = query.trim() !== ""
-  const showEmpty   = query.trim() !== "" && results.length === 0
-  const showDefault = !focused && query === ""
+  const handleUserClick = (user) => {
+    console.log("navigating to:", user._id, user)
+    const updated = saveRecent(user)
+    setRecents(updated)
+    navigate(`/app/profile/${user._id}`)
+  }
+
+  const handleRemoveRecent = (userId, e) => {
+    e.stopPropagation()
+    setRecents(removeRecent(userId))
+  }
+
+  const handleClearAll = () => setRecents(clearRecents())
+
+  const showRecents  = !query && focused && recents.length > 0
+  const showResults  = query.trim() !== "" && results.length > 0
+  const showEmpty    = query.trim() !== "" && !loading && results.length === 0
+  const showIdle     = !query && !focused
 
   return (
     <div style={{
       fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-      color: "#000",
-      minHeight: "100vh",
-      background: "#fff",
+      color: "#000", minHeight: "100vh", background: "#fff",
     }}>
-
-      {/* ── Search bar ── */}
-      <div style={{ padding: "12px 16px 0", maxWidth: 576, margin: "0 auto" }}>
-        <div
+      {/* ── Top bar ── */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 10,
+        background: "rgba(255,255,255,0.97)",
+        backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(0,0,0,0.07)",
+        padding: "0 16px", height: 54,
+        display: "flex", alignItems: "center", gap: 12,
+        maxWidth: 576, margin: "0 auto",
+      }}>
+        <button
+          onClick={() => navigate(-1)}
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            background: focused ? "rgba(0,0,0,0.05)" : "rgba(0,0,0,0.04)",
-            border: focused ? "1px solid rgba(0,0,0,0.2)" : "1px solid rgba(0,0,0,0.08)",
-            borderRadius: 14,
-            padding: "0 14px",
-            height: 46,
-            transition: "all 0.2s",
+            background: "none", border: "none",
+            color: "#000", cursor: "pointer",
+            display: "flex", alignItems: "center", padding: 4,
           }}
         >
-          {/* Search icon */}
+          <BackIcon />
+        </button>
+        <span style={{ fontSize: 16, fontWeight: 700, color: "#000" }}>Search </span>
+        </div>
+      {/* ── Search bar ── */}
+      <div style={{ padding: "12px 16px 0", maxWidth: 576, margin: "0 auto" }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          background: focused ? "rgba(0,0,0,0.05)" : "rgba(0,0,0,0.04)",
+          border: focused ? "1px solid rgba(0,0,0,0.2)" : "1px solid rgba(0,0,0,0.08)",
+          borderRadius: 14, padding: "0 14px", height: 46,
+          transition: "all 0.2s",
+        }}>
           <span style={{ color: focused ? "#000" : "#aaa", transition: "color 0.2s", flexShrink: 0 }}>
             <SearchIcon />
           </span>
-
-          {/* Input */}
           <input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
-            onBlur={() => setTimeout(() => setFocused(false), 150)}
-            placeholder="Search"
+            onBlur={() => setTimeout(() => setFocused(false), 300)}
+            placeholder="Search users"
             style={{
-              flex: 1,
-              background: "none",
-              border: "none",
-              outline: "none",
-              color: "#000",
-              fontSize: 16,
-              fontFamily: "inherit",
-              caretColor: "#000",
+              flex: 1, background: "none", border: "none", outline: "none",
+              color: "#000", fontSize: 16, fontFamily: "inherit", caretColor: "#000",
             }}
           />
-
-          {/* Clear button */}
           {query.length > 0 && (
-            <button
-              onClick={clearQuery}
-              style={{
-                width: 22, height: 22,
-                borderRadius: "50%",
-                background: "rgba(0,0,0,0.12)",
-                border: "none",
-                color: "#000",
-                cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
+            <button onClick={clearQuery} style={{
+              width: 22, height: 22, borderRadius: "50%",
+              background: "rgba(0,0,0,0.12)", border: "none", color: "#000",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
               <XIcon />
             </button>
           )}
@@ -129,59 +196,57 @@ function Search() {
       {/* ── Content area ── */}
       <div style={{ maxWidth: 576, margin: "0 auto" }}>
 
-        {/* Default — suggested */}
-        {showDefault && (
-          <div style={{ padding: "24px 16px 0" }}>
-            <p style={{ fontSize: 13, color: "#aaa", marginBottom: 16, fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-              Suggested
-            </p>
-            {MOCK_USERS.slice(0, 5).map((user, i) => (
-              <UserRow key={user.id} user={user} index={i} />
-            ))}
+        {/* Loading */}
+        {loading && (
+          <div style={{ textAlign: "center", padding: "40px 0", color: "#aaa", fontSize: 14 }}>
+            Searching...
+          </div>
+        )}
+
+        {/* Idle state */}
+        {showIdle && (
+          <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+            <p style={{ fontSize: 15, color: "#000", fontWeight: 600, margin: "0 0 6px" }}>Find people</p>
+            <p style={{ fontSize: 13, color: "#aaa", margin: 0 }}>Search by name or username</p>
           </div>
         )}
 
         {/* Recent searches */}
         {showRecents && (
-          <div style={{ padding: "20px 16px 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <p style={{ fontSize: 13, color: "#aaa", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", margin: 0 }}>
+          <div style={{ paddingTop: 20 }}>
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "0 16px", marginBottom: 8,
+            }}>
+              <span style={{ fontSize: 13, color: "#aaa", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }}>
                 Recent
-              </p>
-              <button
-                onClick={() => setRecents([])}
-                style={{ fontSize: 13, color: "#aaa", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
-              >
+              </span>
+              <button onClick={handleClearAll} style={{
+                fontSize: 13, color: "#aaa", background: "none",
+                border: "none", cursor: "pointer", fontFamily: "inherit",
+              }}>
                 Clear all
               </button>
             </div>
-            {recents.map((handle, i) => {
-              const user = MOCK_USERS.find(u => u.handle === handle)
-              if (!user) return null
-              return (
-                <UserRow
-                  key={handle}
-                  user={user}
-                  index={i}
-                  trailing={
-                    <button
-                      onClick={e => removeRecent(handle, e)}
-                      style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", padding: 4 }}
-                    >
-                      <XIcon />
-                    </button>
-                  }
-                />
-              )
-            })}
-          </div>
-        )}
-
-        {/* Search results */}
-        {showResults && !showEmpty && (
-          <div style={{ paddingTop: 8 }}>
-            {results.map((user, i) => (
-              <UserRow key={user.id} user={user} index={i} highlightQuery={query} />
+            {recents.map((user, i) => (
+              <UserRow
+                key={user._id} user={user} index={i}
+                onUserClick={handleUserClick}
+                highlightQuery=""
+                trailing={
+                  <button
+                    onClick={e => handleRemoveRecent(user._id, e)}
+                    style={{
+                      background: "none", border: "none", color: "#ccc",
+                      cursor: "pointer", padding: 4, display: "flex",
+                      alignItems: "center", justifyContent: "center",
+                    }}
+                  >
+                    <XIcon />
+                  </button>
+                }
+              />
             ))}
           </div>
         )}
@@ -191,18 +256,39 @@ function Search() {
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
             <p style={{ fontSize: 15, color: "#000", fontWeight: 600, margin: "0 0 6px" }}>No results for "{query}"</p>
-            <p style={{ fontSize: 13, color: "#aaa", margin: 0 }}>Try searching for people, topics, or keywords</p>
+            <p style={{ fontSize: 13, color: "#aaa", margin: 0 }}>Try a different name or username</p>
+          </div>
+        )}
+
+        {/* Results */}
+        {showResults && !loading && (
+          <div style={{ paddingTop: 8 }}>
+            {results.map((user, i) => (
+              <UserRow
+                key={user._id} user={user} index={i}
+                onUserClick={handleUserClick}
+                highlightQuery={query}
+              />
+            ))}
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        ::placeholder { color: #bbb; }
+      `}</style>
     </div>
   )
 }
 
 // ── UserRow ────────────────────────────────
-function UserRow({ user, index, trailing, highlightQuery }) {
-  const [hovered, setHovered]     = useState(false)
-  const [following, setFollowing] = useState(false)
+function UserRow({ user, index, onUserClick, highlightQuery, trailing }) {
+  const [hovered, setHovered] = useState(false)
+  const fullName = `${user.firstName} ${user.lastName}`
 
   const highlight = (text) => {
     if (!highlightQuery) return text
@@ -218,74 +304,33 @@ function UserRow({ user, index, trailing, highlightQuery }) {
   }
 
   return (
-    <>
-      <div
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "10px 16px",
-          cursor: "pointer",
-          background: hovered ? "rgba(0,0,0,0.03)" : "transparent",
-          transition: "background 0.15s",
-          animation: `fadeUp 0.3s ease ${index * 40}ms both`,
-        }}
-      >
-        {/* Avatar */}
-        <div style={{
-          width: 44, height: 44,
-          borderRadius: "50%",
-          background: user.color,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontWeight: 700, fontSize: 16, color: "#fff",
-          flexShrink: 0,
-        }}>
-          {user.avatar}
+    <div
+      onClick={() => onUserClick(user)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex", alignItems: "center", gap: 12,
+        padding: "10px 16px", cursor: "pointer",
+        background: hovered ? "rgba(0,0,0,0.03)" : "transparent",
+        transition: "background 0.15s",
+        animation: `fadeUp 0.3s ease ${index * 40}ms both`,
+      }}
+    >
+      <Avatar src={user.profileImageUrl} name={fullName} size={44} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#000", lineHeight: 1.3 }}>
+          {highlight(fullName)}
         </div>
-
-        {/* Text */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#000", lineHeight: 1.3 }}>
-            {highlight(user.name)}
-          </div>
-          <div style={{ fontSize: 13, color: "#aaa", lineHeight: 1.4 }}>
-            {highlight(user.handle)} · {user.followers} followers
-          </div>
+        <div style={{ fontSize: 13, color: "#aaa", lineHeight: 1.4 }}>
+          @{highlight(user.userName)}
         </div>
-
-        {/* Follow button or trailing X */}
-        {trailing ? trailing : (
-          <button
-            onClick={e => { e.stopPropagation(); setFollowing(f => !f) }}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 8,
-              border: "1px solid rgba(0,0,0,0.2)",
-              background: following ? "rgba(0,0,0,0.06)" : "transparent",
-              color: following ? "#aaa" : "#000",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "inherit",
-              transition: "all 0.2s",
-              flexShrink: 0,
-            }}
-          >
-            {following ? "Following" : "Follow"}
-          </button>
-        )}
       </div>
-
-      <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        ::placeholder { color: #bbb; }
-      `}</style>
-    </>
+      {trailing ?? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: "#ccc", flexShrink: 0 }}>
+          <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </div>
   )
 }
 

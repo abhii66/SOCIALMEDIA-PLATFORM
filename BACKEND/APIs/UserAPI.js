@@ -31,7 +31,7 @@ userApp.post("/users",upload.single("profileImageUrl"),async(req,res)=>{
     const newUserDocument=new UserModel(newUser)
     //save 
     const result=await newUserDocument.save()
-    console.log(result)
+    // console.log(result)
     //response
     res.status(201).json({message:"Registration successful."})
 })
@@ -159,7 +159,7 @@ userApp.get('/posts/fyp',verifyToken,async(req,res)=>{
     const userId=req.user?._id
     //get user by id
     const user=await UserModel.findById(userId)
-    let query={isPostActive:true}
+    let query={isPostActive:true,author: {$ne: userId}}
     //get preferences if user has any
     if(user?.preferredCategories?.length>0){
         query.category={$in:user.preferredCategories}
@@ -185,14 +185,14 @@ userApp.put('/users/preferences',verifyToken,async(req,res)=>{
 userApp.get('/posts/following', verifyToken, async (req, res) => {
   try {
     const userId=req.user?._id;
-    console.log(userId)
+    // console.log(userId)
     const user=await UserModel.findById(userId);
     if (!user) {
       return res.status(404).json({ message:"No user found"});
     }
     const followingUsers = user.following
     const allPosts=await PostModel.find({
-      author: { $in:followingUsers }
+      isPostActive:true, author: { $in:followingUsers }
     }).populate("author","firstName lastName userName email profileImageUrl").sort({createdAt:-1})
 
     res.status(200).json({
@@ -302,7 +302,7 @@ userApp.get('/users/profile/:id',verifyToken,async(req,res)=>{
         return res.status(404).json({message:"User Not Found."})
     }
     // fetch their posts too
-    const posts=await PostModel.find({author:userId}).sort({createdAt:-1})
+    const posts=await PostModel.find({author:userId,isPostActive: true}).populate("author", "firstName lastName userName email profileImageUrl").sort({createdAt:-1})
     //res
     res.status(200).json({message:"Profile: ",payload:user,posts})
 })
@@ -318,7 +318,7 @@ userApp.get('/users/profile',verifyToken,async(req,res)=>{
         return res.status(404).json({message:"User Not Found."})
     }
     // fetch posts
-    const posts=await PostModel.find({author:userId}).sort({createdAt:-1})
+    const posts=await PostModel.find({author:userId,isPostActive: true}).populate("author", "firstName lastName userName email profileImageUrl").sort({createdAt:-1})
     //res
     res.status(200).json({message:"Profile: ",payload:user,posts})
 })
@@ -328,7 +328,13 @@ userApp.get('/users/liked-posts', verifyToken, async(req,res)=>{
     //get body from req
     const userId=req.user?._id
     //find user
-    const user=await UserModel.findById(userId).populate("likedPosts")
+    const user=await UserModel.findById(userId).populate({
+        path: "likedPosts",
+        populate: {
+        path: "author",
+        select: "firstName lastName userName email profileImageUrl"
+        }
+    })
     //res 
     res.status(201).json({message:"Liked Posts: ",payload:user.likedPosts})
 })
