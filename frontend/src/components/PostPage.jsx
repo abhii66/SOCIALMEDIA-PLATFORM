@@ -240,7 +240,7 @@ function Comment({ c, postId, currentUser, onDelete, navigate }) {
 
       {/* Reply input */}
       {showReplyInput && (
-        <div className="flex gap-2 mt-2 ml-10 ">
+        <div className="flex gap-2 mt-2 ml-10">
           <input
             type="text"
             className={`${inputClass} text-xs py-1.5`}
@@ -280,7 +280,7 @@ function Comment({ c, postId, currentUser, onDelete, navigate }) {
                 </div>
                 <p className="text-[9px] text-[#a1a1a6]">{formatDate(r.createdAt)}</p>
               </div>
-              <p className="text-[#1d1d1f] dark:text-[#e5e5ea] text-sm leading-relaxed mt-1">{r.text}</p>
+              <p className={replyText}>{r.text}</p>
               <div className="mt-1">
                 <ReplyLikeBtn
                   commentId={c._id}
@@ -445,13 +445,19 @@ function PostPage() {
 
       {/* Actions */}
       <div className={postActions}>
-        <button
-          className={isLiked ? likedBtn : likeBtn}
-          onClick={handleLike}
-          disabled={liking}
-        >
-          {isLiked ? "♥" : "♡"} {post.likes?.length ?? 0}
-        </button>
+        {currentUser?.isUserActive !== false ? (
+          <button
+            className={isLiked ? likedBtn : likeBtn}
+            onClick={handleLike}
+            disabled={liking}
+          >
+            {isLiked ? "♥" : "♡"} {post.likes?.length ?? 0}
+          </button>
+        ) : (
+          <span className="text-sm text-[#a1a1aa] dark:text-[#52525b] cursor-not-allowed" title="Likes disabled">
+            ♡ {post.likes?.length ?? 0}
+          </span>
+        )}
         <span className="text-sm text-[#6e6e73] dark:text-[#98989d]">💬 {comments.length}</span>
 
         {isMyPost && !confirmDelete && (
@@ -470,8 +476,8 @@ function PostPage() {
         </div>
       )}
 
-      {/* Comment input — only for non-owners */}
-      {!isMyPost && (
+      {/* Comment input — only for non-owners and active users */}
+      {!isMyPost && currentUser?.isUserActive !== false && (
         <div className={commentInputRow}>
           <input
             type="text"
@@ -484,6 +490,11 @@ function PostPage() {
           <button className={primaryBtn} onClick={handleComment} disabled={commenting}>
             Post
           </button>
+        </div>
+      )}
+      {!isMyPost && currentUser?.isUserActive === false && (
+        <div className="mt-5 px-4 py-3 bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800/30 rounded-xl text-sm text-rose-500 dark:text-rose-400 text-center">
+          Your account has been restricted. Commenting is disabled.
         </div>
       )}
 

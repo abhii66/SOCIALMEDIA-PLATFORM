@@ -27,7 +27,6 @@ function Register() {
   const [apiError, setApiError] = useState(null);
   const navigate = useNavigate();
 
-  // POST /user-api/register — { name, username, email, password }
   const onUserRegister = async (formData) => {
     try {
       setLoading(true);
@@ -45,17 +44,23 @@ function Register() {
   };
 
   if (loading) {
-    return <p className={loadingClass}>Creating your account...</p>;
+    return <p className={loadingClass}>Creating your account…</p>;
   }
 
   return (
     <div className={`${pageBackground} flex items-center justify-center py-16 px-4`}>
       <div className={formCard}>
-        <h2 className={formTitle}>Create an Account</h2>
+        {/* Logo mark */}
+        <div className="flex justify-center mb-5">
+          <span className="w-12 h-12 rounded-2xl bg-violet-600 dark:bg-violet-500 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-violet-200 dark:shadow-none">S</span>
+        </div>
+
+        <h2 className={formTitle}>Create an account</h2>
+        <p className="text-sm text-[#64748b] dark:text-[#94a3b8] text-center mb-6">Join SocialApp and start sharing</p>
 
         {apiError && <p className={`${errorClass} mb-4`}>{apiError}</p>}
 
-        <form onSubmit={handleSubmit(onUserRegister)}>
+        <form onSubmit={handleSubmit(onUserRegister)} className="flex flex-col gap-1">
           {/* Full Name */}
           <div className={formGroup}>
             <label className={labelClass}>Full Name</label>
@@ -68,7 +73,7 @@ function Register() {
                 minLength: { value: 2, message: "At least 2 characters required" },
               })}
             />
-            {errors.name && <p className={errorClass}>{errors.name.message}</p>}
+            {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name.message}</p>}
           </div>
 
           {/* Username */}
@@ -77,7 +82,7 @@ function Register() {
             <input
               type="text"
               className={inputClass}
-              placeholder="@username"
+              placeholder="lowercase_username"
               {...register("username", {
                 required: "Username is required",
                 minLength: { value: 3, message: "At least 3 characters required" },
@@ -87,7 +92,7 @@ function Register() {
                 },
               })}
             />
-            {errors.username && <p className={errorClass}>{errors.username.message}</p>}
+            {errors.username && <p className="text-xs text-rose-500 mt-1">{errors.username.message}</p>}
           </div>
 
           {/* Email */}
@@ -99,7 +104,7 @@ function Register() {
               placeholder="you@example.com"
               {...register("email", { required: "Email is required" })}
             />
-            {errors.email && <p className={errorClass}>{errors.email.message}</p>}
+            {errors.email && <p className="text-xs text-rose-500 mt-1">{errors.email.message}</p>}
           </div>
 
           {/* Password */}
@@ -114,7 +119,7 @@ function Register() {
                 minLength: { value: 8, message: "At least 8 characters required" },
               })}
             />
-            {errors.password && <p className={errorClass}>{errors.password.message}</p>}
+            {errors.password && <p className="text-xs text-rose-500 mt-1">{errors.password.message}</p>}
           </div>
 
           <button type="submit" className={submitBtn}>
@@ -122,7 +127,13 @@ function Register() {
           </button>
         </form>
 
-        <p className={`${mutedText} text-center mt-5`}>
+        <div className="flex items-center gap-3 my-5">
+          <div className="flex-1 h-px bg-[#e2e8f0] dark:bg-[#27272a]" />
+          <span className="text-xs text-[#94a3b8]">OR</span>
+          <div className="flex-1 h-px bg-[#e2e8f0] dark:bg-[#27272a]" />
+        </div>
+
+        <p className={`${mutedText} text-center`}>
           Already have an account?{" "}
           <NavLink to="/login" className={linkClass}>
             Sign in

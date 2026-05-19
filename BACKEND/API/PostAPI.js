@@ -9,12 +9,17 @@ import { uploadToCloudinary } from '../config/cloudinaryUpload.js'
 export const PostAPI = exp.Router()
 
 // Helper: check if requesting user can access a post
-// Private account: only the owner can see posts
+// Blocked author: nobody can see their posts (except themselves if ever re-activated)
+// Private account: only the owner OR approved followers can see posts
 async function canAccessPost(postAuthorId, requestUserId) {
   if (postAuthorId.toString() === requestUserId) return true
-  const author = await UserModel.findById(postAuthorId).select('isPrivate')
+  const author = await UserModel.findById(postAuthorId).select('isPrivate followers isUserActive')
   if (!author) return false
-  return !author.isPrivate
+  // Blocked users' posts are invisible to everyone else
+  if (!author.isUserActive) return false
+  if (!author.isPrivate) return true
+  // Private: requester must be an approved follower
+  return author.followers.map(f => f.toString()).includes(requestUserId)
 }
 
 // =====================================================
@@ -123,6 +128,7 @@ PostAPI.delete('/:id', verifyToken, async (req, res) => {
 // =====================================================
 // LIKE / UNLIKE POST
 // PUT /post-api/:id/like
+// Blocked users cannot like any post
 // =====================================================
 PostAPI.put('/:id/like', verifyToken, async (req, res) => {
   try {
@@ -130,6 +136,12 @@ PostAPI.put('/:id/like', verifyToken, async (req, res) => {
 
     if (!post || !post.isPostActive) {
       return res.status(404).json({ message: "Post not found" })
+    }
+
+    // Check if liker is blocked by admin
+    const liker = await UserModel.findById(req.user.id).select('isUserActive')
+    if (!liker || !liker.isUserActive) {
+      return res.status(403).json({ message: "You are not allowed to like posts." })
     }
 
     const allowed = await canAccessPost(post.author, req.user.id)
@@ -173,6 +185,7 @@ PostAPI.get('/:id/likes', verifyToken, async (req, res) => {
 // =====================================================
 // ADD COMMENT
 // PUT /post-api/:id/comment
+// Blocked users cannot comment; comments from blocked users are hidden
 // =====================================================
 PostAPI.put('/:id/comment', verifyToken, async (req, res) => {
   try {
@@ -180,6 +193,12 @@ PostAPI.put('/:id/comment', verifyToken, async (req, res) => {
 
     if (!text) {
       return res.status(400).json({ message: "Comment text is required" })
+    }
+
+    // Check if commenter is blocked
+    const commenter = await UserModel.findById(req.user.id).select('isUserActive')
+    if (!commenter || !commenter.isUserActive) {
+      return res.status(403).json({ message: "You are not allowed to comment." })
     }
 
     const post = await PostModel.findById(req.params.id)
@@ -190,6 +209,12 @@ PostAPI.put('/:id/comment', verifyToken, async (req, res) => {
 
     if (post.author.toString() === req.user.id) {
       return res.status(403).json({ message: "You cannot comment on your own post" })
+    }
+
+    // Check access (private account)
+    const allowed = await canAccessPost(post.author, req.user.id)
+    if (!allowed) {
+      return res.status(403).json({ message: "This account is private." })
     }
 
     const newComment = new CommentModel({
@@ -212,6 +237,7 @@ PostAPI.put('/:id/comment', verifyToken, async (req, res) => {
 // =====================================================
 // GET ALL COMMENTS
 // GET /post-api/:id/comments
+// Comments from blocked (inactive) users are excluded
 // =====================================================
 PostAPI.get('/:id/comments', verifyToken, async (req, res) => {
   try {
@@ -219,8 +245,8 @@ PostAPI.get('/:id/comments', verifyToken, async (req, res) => {
       .populate({
         path: "comments",
         populate: [
-          { path: "author", select: "name username profilePic" },
-          { path: "replies.author", select: "name username profilePic" }
+          { path: "author", select: "name username profilePic isUserActive" },
+          { path: "replies.author", select: "name username profilePic isUserActive" }
         ]
       })
 
@@ -228,7 +254,12 @@ PostAPI.get('/:id/comments', verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Post not found" })
     }
 
-    res.status(200).json({ message: "Comments fetched successfully", payload: post.comments })
+    // Filter out comments from blocked users
+    const visibleComments = post.comments.filter(
+      c => c.author && c.author.isUserActive !== false
+    )
+
+    res.status(200).json({ message: "Comments fetched successfully", payload: visibleComments })
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch comments" })
   }
@@ -265,9 +296,16 @@ PostAPI.delete('/:postId/comment/:commentId', verifyToken, async (req, res) => {
 // =====================================================
 // LIKE / UNLIKE A COMMENT
 // PUT /post-api/:postId/comment/:commentId/like
+// Blocked users cannot like comments
 // =====================================================
 PostAPI.put('/:postId/comment/:commentId/like', verifyToken, async (req, res) => {
   try {
+    // Check if liker is blocked
+    const liker = await UserModel.findById(req.user.id).select('isUserActive')
+    if (!liker || !liker.isUserActive) {
+      return res.status(403).json({ message: "You are not allowed to like." })
+    }
+
     const comment = await CommentModel.findById(req.params.commentId)
 
     if (!comment || !comment.isCommentActive) {
@@ -305,6 +343,12 @@ PostAPI.post('/:postId/comment/:commentId/reply', verifyToken, async (req, res) 
       return res.status(400).json({ message: "Reply text is required" })
     }
 
+    // Check if replier is blocked
+    const replier = await UserModel.findById(req.user.id).select('isUserActive')
+    if (!replier || !replier.isUserActive) {
+      return res.status(403).json({ message: "You are not allowed to reply." })
+    }
+
     const comment = await CommentModel.findById(req.params.commentId)
 
     if (!comment || !comment.isCommentActive) {
@@ -338,6 +382,12 @@ PostAPI.post('/:postId/comment/:commentId/reply', verifyToken, async (req, res) 
 // =====================================================
 PostAPI.put('/:postId/comment/:commentId/reply/:replyId/like', verifyToken, async (req, res) => {
   try {
+    // Check if liker is blocked
+    const liker = await UserModel.findById(req.user.id).select('isUserActive')
+    if (!liker || !liker.isUserActive) {
+      return res.status(403).json({ message: "You are not allowed to like." })
+    }
+
     const comment = await CommentModel.findById(req.params.commentId)
 
     if (!comment) {

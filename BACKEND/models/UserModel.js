@@ -1,60 +1,66 @@
 import mongoose, { Schema } from "mongoose";
 
 const userSchema = new Schema({
-     name: {
+    name: {
         type: String,
         required: [true, "Name is required"]
     },
-    username:{
-        type:String,
-        required:[true,"Username is required"],
-        unique:[true,"Username already exists"]
+    username: {
+        type: String,
+        required: [true, "Username is required"],
+        unique: [true, "Username already exists"]
     },
-    email:{
-        type:String,
-        required:[true,"Email is required"],
-        unique:[true,"Email already exists"]
+    email: {
+        type: String,
+        required: [true, "Email is required"],
+        unique: [true, "Email already exists"]
     },
-    password:{
-        type:String,
-        required:[true,"Password is required"]
+    password: {
+        type: String,
+        required: [true, "Password is required"]
     },
-    bio:{
-        type:String,
-        default:""
+    bio: {
+        type: String,
+        default: ""
     },
-    profilePic:{
-        type:String,
-        default:""
+    profilePic: {
+        type: String,
+        default: ""
     },
-    followers:[
+    followers: [
         {
             type: Schema.Types.ObjectId,
-            ref:"user"
+            ref: "user"
         }
     ],
-    following:[
+    following: [
         {
             type: Schema.Types.ObjectId,
-            ref:"user"
+            ref: "user"
         }
     ],
-    isUserActive:{
-        type:Boolean,
-        default:true
+    // Pending follow requests (used when account is private)
+    followRequests: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "user"
+        }
+    ],
+    isUserActive: {
+        type: Boolean,
+        default: true
     },
     isAdmin: {
-    type: Boolean,
-    default: false
+        type: Boolean,
+        default: false
     },
     isPrivate: {
         type: Boolean,
         default: false
     }
-},{
-    timestamps:true,
-    versionKey:false,
-    strict:"throw"
+}, {
+    timestamps: true,
+    versionKey: false
 });
 
 export const UserModel =

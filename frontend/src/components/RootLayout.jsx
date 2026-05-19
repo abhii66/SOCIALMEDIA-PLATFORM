@@ -5,36 +5,31 @@ import { useAuth } from "../store/authStore";
 import { useEffect } from "react";
 
 function RootLayout() {
-  const checkAuth = useAuth((state) => state.checkAuth);
-  const loading = useAuth((state) => state.loading);
+  const checkAuth = useAuth(s => s.checkAuth);
+  const loading   = useAuth(s => s.loading);
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  useEffect(() => { checkAuth(); }, [checkAuth]);
 
-  // Apply saved theme on first paint
   useEffect(() => {
     const stored = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (stored === "dark" || (!stored && prefersDark)) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    if (stored === "dark" || (!stored && prefersDark)) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
   }, []);
 
-  if (loading) {
-    return (
-      <p className="text-center text-sm text-[#a1a1a6] dark:text-[#6e6e73] py-20 animate-pulse">
-        Loading...
-      </p>
-    );
-  }
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen bg-[#fafaf9] dark:bg-[#0c0c0d]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-[#a1a1aa]">Loading…</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="bg-white dark:bg-[#0f0f0f] min-h-screen transition-colors duration-300">
+    <div className="bg-[#fafaf9] dark:bg-[#0c0c0d] min-h-screen transition-colors duration-300">
       <Header />
-      <div className="min-h-screen mx-auto max-w-5xl px-4">
+      <div className="min-h-screen max-w-4xl mx-auto px-4">
         <Outlet />
       </div>
       <Footer />
